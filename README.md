@@ -1,6 +1,6 @@
 # fieldenum
 
-Rust-like fielded Enum in Python
+Rust-like fielded Enums in Python
 
 ## Examples
 
