@@ -2,18 +2,19 @@
 
 Rust-like fielded Enums in Python
 
+**[한국어로 보기](docs/README-ko.md)**
+
 ## Examples
 
 ```python
-from fieldenum import fieldenum, Item
+from fieldenum import fieldenum, Unit, Variant
 
-# define
 @fieldenum
 class Message:
-    Quit = Item()
-    Move = Item(x=int, y=int)
-    Write = Item(str)
-    ChangeColor = Item(int, int, int)
+    Quit = Unit
+    Move = Variant(x=int, y=int)
+    Write = Variant(str)
+    ChangeColor = Variant(int, int, int)
 
 # Corresponding code in Rust:
 # enum Message {
@@ -25,7 +26,7 @@ class Message:
 
 
 # usage
-message = Message.Quit()
+message = Message.Quit
 message = Message.Move(x=1, y=2)
 message = Message.Write("hello, world!")
 message = Message.ChangeColor(256, 256, 0)
