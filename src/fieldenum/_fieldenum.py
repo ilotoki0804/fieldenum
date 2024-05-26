@@ -228,7 +228,7 @@ class Variant:
             self._actual = NamedConstructedVariant
 
         else:
-            class UnitConstructedVariant(ConstructedVariant, metaclass=ParamlessSingletonMeta):
+            class FieldlessConstructedVariant(ConstructedVariant, metaclass=ParamlessSingletonMeta):
                 __fields__ = ()
                 __slots__ = ()
 
@@ -252,7 +252,7 @@ class Variant:
 
                 def __init__(self) -> None:
                     pass
-            self._actual = UnitConstructedVariant
+            self._actual = FieldlessConstructedVariant
         # fmt: on
 
         copyreg.pickle(self._actual, self._actual._pickle)
@@ -327,7 +327,7 @@ class UnitDescriptor:
             raise TypeError("`self.name` is not set.")
 
         # fmt: off
-        class UnitConstructedCase(cls, metaclass=ParamlessSingletonMeta):  # TODO
+        class UnitConstructedVariant(cls, metaclass=ParamlessSingletonMeta):  # TODO
             __name__ = self.name
             __slots__ = ()
             __fields__ = None  # `None` means it does not accept initializing.
@@ -340,7 +340,7 @@ class UnitDescriptor:
 
             @staticmethod
             def _pickle(case):
-                assert isinstance(case, UnitConstructedCase)
+                assert isinstance(case, UnitConstructedVariant)
                 return unpickle, (cls, self.name, None)
 
             def __init__(self):
@@ -353,10 +353,10 @@ class UnitDescriptor:
                 return f"{cls.__name__}.{self.__name__}"
         # fmt: off
 
-        copyreg.pickle(UnitConstructedCase, UnitConstructedCase._pickle)
+        copyreg.pickle(UnitConstructedVariant, UnitConstructedVariant._pickle)
 
         # This will replace Unit to Specialized instance.
-        setattr(cls, self.name, UnitConstructedCase())
+        setattr(cls, self.name, UnitConstructedVariant())
 
 
 Unit = UnitDescriptor()
