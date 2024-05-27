@@ -75,9 +75,10 @@ class Variant:
         raise TypeError(f"Given type is invalid. Type: {field}, value: {value}")
 
     def with_default(self, **defaults) -> typing.Self:
+        """**Experimental Feature**"""
         _, named_field = self.field
         if not named_field:
-            raise TypeError("Only named cases can get defaults.")
+            raise TypeError("Only named variants can get defaults.")
 
         self._defaults = defaults
         return self
@@ -153,9 +154,9 @@ class Variant:
                     return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
                 @staticmethod
-                def _pickle(case):
-                    assert isinstance(case, ConstructedVariant)
-                    return unpickle, (cls, self.name, tuple(getattr(case, f"_{i}") for i in case.__fields__))
+                def _pickle(variant):
+                    assert isinstance(variant, ConstructedVariant)
+                    return unpickle, (cls, self.name, tuple(getattr(variant, f"_{i}") for i in variant.__fields__))
 
                 def dump(self) -> tuple:
                     return tuple(getattr(self, f"_{name}") for name in self.__fields__)
@@ -190,9 +191,9 @@ class Variant:
                         __hash__ = None  # type: ignore
 
                 @staticmethod
-                def _pickle(case):
-                    assert isinstance(case, ConstructedVariant)
-                    return unpickle, (cls, self.name, {name: getattr(case, name) for name in case.__fields__})
+                def _pickle(variant):
+                    assert isinstance(variant, ConstructedVariant)
+                    return unpickle, (cls, self.name, {name: getattr(variant, name) for name in variant.__fields__})
 
                 def dump(self):
                     return {name: getattr(self, name) for name in self.__fields__}
@@ -233,8 +234,8 @@ class Variant:
                         return hash(id(self))
 
                 @staticmethod
-                def _pickle(case):
-                    assert isinstance(case, ConstructedVariant)
+                def _pickle(variant):
+                    assert isinstance(variant, ConstructedVariant)
                     return unpickle, (cls, self.name, ())
 
                 def dump(self):
@@ -336,8 +337,8 @@ class UnitDescriptor:
                 return None
 
             @staticmethod
-            def _pickle(case):
-                assert isinstance(case, UnitConstructedVariant)
+            def _pickle(variant):
+                assert isinstance(variant, UnitConstructedVariant)
                 return unpickle, (cls, self.name, None)
 
             def __init__(self):

@@ -14,13 +14,13 @@ from .exceptions import NotAllowedError
 
 
 def unpickle(cls, name: str, state: tuple | dict | None):
-    case = getattr(cls, name)
+    variant = getattr(cls, name)
     if state is None:
-        return case
+        return variant
     elif isinstance(state, tuple):
-        return case(*state)
+        return variant(*state)
     else:
-        return case(**state)
+        return variant(**state)
 
 
 copyreg.constructor(unpickle)  # type: ignore # supressing incorrect type checker error

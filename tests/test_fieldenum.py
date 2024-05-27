@@ -86,7 +86,7 @@ def test_mutable_fieldenum():
 
 
 def test_relationship():
-    # Unit cases are the instances. Use fieldless case if you want issubclass work.
+    # Unit variants are the instances. Use fieldless variant if you want issubclass work.
     assert isinstance(Message.Quit, Message)
 
     assert issubclass(Message.Move, Message)
