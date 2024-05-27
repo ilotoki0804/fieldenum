@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Self, final, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, Self, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
 from .exceptions import UnwrapFailedError
 
-__all__ = ["Option", "BoundResult", "Message"]
+__all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 
 _MISSING = object()
 
@@ -61,19 +61,89 @@ class Option[T]:
             case other:
                 unreachable(other)
 
-    def map[U](self, func: Callable[[T], U]) -> Option[U]:
-        match self:
+    @overload
+    def map[U](
+        self,
+        func: Callable[[T], U | None],
+        /,
+        *,
+        as_is: Literal[True] = ...,
+        unwrap_result: Literal[False] = ...,
+    ) -> Option[U]: ...
+
+    @overload
+    def map[U](
+        self,
+        func: Callable[[T], BoundResult[U | None, Any]],
+        /,
+        *,
+        as_is: Literal[True] = ...,
+        unwrap_result: Literal[True] = ...,
+    ) -> Option[U]: ...
+
+    @overload
+    def map[U](
+        self,
+        func: Callable[[T], Option[U] | U | None],
+        /,
+        *,
+        as_is: Literal[False] = ...,
+        unwrap_result: Literal[False] =...,
+    ) -> Option[U]: ...
+
+    @overload
+    def map[U](
+        self,
+        func: Callable[[T], BoundResult[Option[U] | U | None, Any]],
+        /,
+        *,
+        as_is: Literal[False] = ...,
+        unwrap_result: Literal[True] =...,
+    ) -> Option[U]: ...
+
+    def map(self, func, /, *, as_is=True, unwrap_result=False):
+        if not self:
+            return self
+
+        result = func(self.unwrap())
+
+        if unwrap_result:
+            match result:
+                case BoundResult.Success(result, _):
+                    result
+
+                case BoundResult.Failed(_, _):
+                    return Option.Nothing
+
+                case value:  # This behavior may be changed
+                    raise TypeError(f"function must return BoundResult since unwrap_result is True. value: {value}")
+
+        match result:
+            case None:
+                return Option.Nothing
+
+            case result if as_is:
+                return Option.Some(result)
+
             case Option.Nothing:
-                return self
+                return Option.Nothing
 
-            case Option.Some(value):
-                return Option.Some(func(value))
+            case Option.Some(_) as result:
+                return result
 
-            case other:
-                unreachable(other)
+            case result:
+                return Option.Some(result)
 
     def __bool__(self):
         return self is not Option.Nothing
+
+    @classmethod
+    def wrap[**Params, Return](
+        cls, func: Callable[Params, Return | None], /
+    ) -> Callable[Params, Option[Return]]:
+        def decorator(*args: Params.args, **kwargs: Params.kwargs) -> Option[Return]:
+            return Option.new(func(*args, **kwargs))
+        return decorator
 
 
 @final  # a redundant decorator for type checkers
@@ -130,7 +200,7 @@ class BoundResult[R, E: BaseException]:
             case BoundResult.Success(ok, _):
                 return BoundResult.Success(ok, bound)
 
-            case BoundResult.Success(err, _):
+            case BoundResult.Failed(err, _):
                 return BoundResult.Failed(err, bound)
 
             case other:
@@ -234,17 +304,17 @@ if TYPE_CHECKING:
     class Some[T](Option[T]):
         __match_args__ = ("value",)
 
-        def __init__(self, value, /): ...
+        def __init__(self, value: T, /): ...
 
     class Success[R, E](BoundResult[R, E]):
         __match_args__ = ("result", "bound")
 
-        def __init__(self, result, Bound, /): ...
+        def __init__(self, result: R, Bound: type[E], /): ...
 
     class Failed[R, E](BoundResult[R, E]):
         __match_args__ = ("result", "bound")
 
-        def __init__(self, result, Bound, /): ...
+        def __init__(self, result: E, Bound: type[E], /): ...
 
 else:
     Some = Option.Some
