@@ -130,16 +130,6 @@ class Variant:
                 def __eq__(self, other: typing.Self):
                     return type(self) is type(other) and self.dump() == other.dump()
 
-            def __repr__(self) -> str:
-                if tuple_field:
-                    values_repr = ", ".join(repr(getattr(self, f"_{name}" if isinstance(name, int) else name)) for name in self.__fields__)
-                elif named_field:
-                    values_repr = ', '.join(f'{name}={getattr(self, f"_{name}" if isinstance(name, int) else name)!r}' for name in self.__fields__)
-                else:
-                    values_repr = ""
-
-                return f"{item._base.__name__}.{self.__name__}({values_repr})"
-
         if tuple_field:
             class TupleConstructedVariant(ConstructedVariant):
                 __fields__ = tuple(range(len(tuple_field)))
@@ -157,6 +147,10 @@ class Variant:
                             return self._hash
                     else:
                         __hash__ = None  # type: ignore
+
+                def __repr__(self) -> str:
+                    values_repr = ", ".join(repr(getattr(self, f"_{name}" if isinstance(name, int) else name)) for name in self.__fields__)
+                    return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
                 @staticmethod
                 def _pickle(case):
@@ -213,7 +207,7 @@ class Variant:
 
                 def __init__(self, **kwargs) -> None:
                     if self.__defaults__:
-                        kwargs.update(self.__defaults__)
+                        kwargs = self.__defaults__ | kwargs
 
                     if missed_keys := kwargs.keys() ^ named_field.keys():
                         raise TypeError(f"Key mismatch: {missed_keys}")

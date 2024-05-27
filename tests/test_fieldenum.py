@@ -12,7 +12,7 @@ from fieldenum.exceptions import NotAllowedError
 @fieldenum
 class Message:
     Quit = Unit
-    Move = Variant(x=int, y=int)
+    Move = Variant(x=int, y=int).with_default(x=234569834)
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
     Pause = Variant()
@@ -27,12 +27,19 @@ def test_miscs():
         class DerivedMessage(Message):
             New = Unit
 
+    with pytest.raises(TypeError):
+        @fieldenum
+        class Mixed:
+            New = Variant(str, x=int)
+
     with pytest.raises(TypeError, match="self.name"):
         Unit.attach(Message, eq=True, build_hash=False, frozen=False, runtime_check=False)
 
     with pytest.raises(TypeError):
         message = Message.Move(x=123, y=567)
         message.x = 224
+
+    assert Message.Move(y=325) == Message.Move(x=234569834, y=325)
 
 
 def test_mutable_fieldenum():
