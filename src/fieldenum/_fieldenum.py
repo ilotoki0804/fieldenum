@@ -124,7 +124,7 @@ class Variant:
 
             if eq:
                 def __eq__(self, other: typing.Self):
-                    return type(self) is type(other) and self._dump() == other._dump()
+                    return type(self) is type(other) and self.dump() == other.dump()
 
             def __repr__(self) -> str:
                 if tuple_field:
@@ -149,7 +149,7 @@ class Variant:
                             with suppress(AttributeError):
                                 return self._hash
 
-                            self._hash = hash(self._dump())
+                            self._hash = hash(self.dump())
                             return self._hash
                     else:
                         __hash__ = None  # type: ignore
@@ -159,7 +159,7 @@ class Variant:
                     assert isinstance(case, ConstructedVariant)
                     return unpickle, (cls, self.name, tuple(getattr(case, f"_{i}") for i in case.__fields__))
 
-                def _dump(self) -> tuple:
+                def dump(self) -> tuple:
                     return tuple(getattr(self, f"_{name}") for name in self.__fields__)
 
                 def __repr__(self) -> str:
@@ -190,7 +190,7 @@ class Variant:
                             with suppress(AttributeError):
                                 return self._hash
 
-                            self._hash = hash(tuple(self._dump().items()))
+                            self._hash = hash(tuple(self.dump().items()))
                             return self._hash
                     else:
                         __hash__ = None  # type: ignore
@@ -200,12 +200,12 @@ class Variant:
                     assert isinstance(case, ConstructedVariant)
                     return unpickle, (cls, self.name, {name: getattr(case, name) for name in case.__fields__})
 
-                def _dump(self):
+                def dump(self):
                     return {name: getattr(self, name) for name in self.__fields__}
 
                 if eq:
                     def __eq__(self, other: typing.Self):
-                        return type(self) is type(other) and self._dump() == other._dump()
+                        return type(self) is type(other) and self.dump() == other.dump()
 
                 def __repr__(self) -> str:
                     values_repr = ', '.join(f'{name}={getattr(self, f"_{name}" if isinstance(name, int) else name)!r}' for name in self.__fields__)
@@ -243,7 +243,7 @@ class Variant:
                     assert isinstance(case, ConstructedVariant)
                     return unpickle, (cls, self.name, ())
 
-                def _dump(self):
+                def dump(self):
                     return ()
 
                 def __repr__(self) -> str:
@@ -312,6 +312,9 @@ class UnitDescriptor:
 
     def __get__(self, obj, objtype: type[Base] | None = None) -> Base | typing.Self:
         return self
+
+    def dump(self):
+        return None
 
     def attach(
         self,
