@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from typing import TYPE_CHECKING, Any, Callable, Literal, Self, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
@@ -141,6 +142,7 @@ class Option[T]:
     def wrap[**Params, Return](
         cls, func: Callable[Params, Return | None], /
     ) -> Callable[Params, Option[Return]]:
+        @functools.wraps(func)
         def decorator(*args: Params.args, **kwargs: Params.kwargs) -> Option[Return]:
             return Option.new(func(*args, **kwargs))
         return decorator
@@ -263,6 +265,7 @@ class BoundResult[R, E: BaseException]:
         match args:
             case [bound]:
                 def decorator(func):
+                    @functools.wraps(func)
                     def inner(*args, **kwargs):
                         try:
                             return BoundResult.Success(func(*args, **kwargs), bound)
@@ -274,6 +277,7 @@ class BoundResult[R, E: BaseException]:
                 return decorator
 
             case func, bound:
+                @functools.wraps(func)
                 def inner(*args, **kwargs):
                     try:
                         return BoundResult.Success(func(*args, **kwargs), bound)
