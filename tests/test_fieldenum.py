@@ -5,6 +5,7 @@ from typing import Any, Self
 
 import pytest
 from fieldenum import Unit, Variant, fieldenum, unreachable
+from fieldenum._utils import NotAllowed
 from fieldenum.exceptions import NotAllowedError
 
 
@@ -20,6 +21,61 @@ class Message:
 def test_miscs():
     with pytest.raises(NotAllowedError):
         Message()
+
+    with pytest.raises(TypeError):
+        @fieldenum
+        class DerivedMessage(Message):
+            New = Unit
+
+    with pytest.raises(TypeError, match="self.name"):
+        Unit.attach(Message, eq=True, build_hash=False, frozen=False, runtime_check=False)
+
+    with pytest.raises(TypeError):
+        message = Message.Move(x=123, y=567)
+        message.x = 224
+
+
+def test_mutable_fieldenum():
+    @fieldenum(frozen=False)
+    class Message:
+        Quit = Unit
+        Move = Variant(x=int, y=int)
+        Write = Variant(str)
+        ChangeColor = Variant(int, int, int)
+        Pause = Variant()
+
+    with pytest.raises(TypeError):
+        {Message.Quit}
+
+    with pytest.raises(TypeError):
+        {Message.Move(x=123, y=345)}
+
+    with pytest.raises(TypeError):
+        {Message.Write("hello")}
+
+    with pytest.raises(TypeError):
+        {Message.ChangeColor(123, 456, 789)}
+
+    with pytest.raises(TypeError):
+        {Message.Pause()}
+
+    message = Message.Move(x=123, y=345)
+    message.x = 654
+    assert message == Message.Move(x=654, y=345)
+    assert message.dump() == {"x": 654, "y": 345}
+
+    message = Message.Write("hello")
+    message._0 = "world"
+    assert message == Message.Write("world")
+    assert message.dump() == ("world",)
+
+    message = Message.ChangeColor(123, 456, 789)
+    message._1 = 2345
+    assert message == Message.ChangeColor(123, 2345, 789)
+    assert message.dump() == (123, 2345, 789)
+
+    assert Message.Quit.dump() is None
+    assert Message.Pause().dump() == ()
 
 
 def test_relationship():
@@ -121,8 +177,8 @@ def test_complex_matching():
         case Message.Move(x=_, y=1 | 456):
             assert True
 
-        case _:
-            assert False
+        case other:
+            assert False, other
 
 
 @pytest.mark.parametrize(

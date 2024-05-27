@@ -3,6 +3,7 @@
 import pytest
 from fieldenum import *
 from fieldenum.enums import *
+from fieldenum.enums import Some
 from fieldenum.exceptions import UnwrapFailedError
 
 
@@ -39,6 +40,10 @@ def test_option():
     assert option.map(int) == Option.Some(123)
     option = Option.Nothing
     assert option.map(int) is Option.Nothing
+
+    # test map(func, as_is=True)
+    myoption = Some("123")
+    myoption.map(int, as_is=False)
 
     # test __bool__
     assert Option.Some(False)
@@ -84,8 +89,8 @@ def test_bound_result_wrap(second_param):
     match exception_bound_func(ValueError(), "hello"):
         case BoundResult.Failed(err, _):
             assert isinstance(err, ValueError)
-        case _:
-            assert False
+        case other:
+            assert False, other
     with pytest.raises(Exception, match="message"):
         valueerror_bound_func(Exception("message"))
     with pytest.raises(BaseException, match="message"):
@@ -102,8 +107,8 @@ def test_bound_result_wrap(second_param):
     match exception_bound_func(None, "hello").map(lambda s: 1 / 0):
         case BoundResult.Failed(err, _):
             assert isinstance(err, ZeroDivisionError)
-        case _:
-            assert False
+        case other:
+            assert False, other
     with pytest.raises(ZeroDivisionError):
         exception_bound_func(None, "hello").rebound(ValueError).map(lambda s: 1 / 0)
 
