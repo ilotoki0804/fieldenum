@@ -38,6 +38,10 @@ class Variant:
         else:
             self._slots_names = tuple(f"_{i}" for i in range(len(tuple_field)))
 
+    if typing.TYPE_CHECKING:
+        def dump(self):
+            ...
+
     def check_type(self, field, value, /):
         """Should raise error when type is mismatched."""
 
@@ -161,10 +165,6 @@ class Variant:
 
                 def dump(self) -> tuple:
                     return tuple(getattr(self, f"_{name}") for name in self.__fields__)
-
-                def __repr__(self) -> str:
-                    values_repr = ", ".join(repr(getattr(self, f"_{name}" if isinstance(name, int) else name)) for name in self.__fields__)
-                    return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
                 def __init__(self, *args) -> None:
                     if len(tuple_field) != len(args):
@@ -313,9 +313,6 @@ class UnitDescriptor:
     def __get__(self, obj, objtype: type[Base] | None = None) -> Base | typing.Self:
         return self
 
-    def dump(self):
-        return None
-
     def attach(
         self,
         cls,
@@ -341,6 +338,9 @@ class UnitDescriptor:
                 def __hash__(self):
                     return hash(id(self))
 
+            def dump(self):
+                return None
+
             @staticmethod
             def _pickle(case):
                 assert isinstance(case, UnitConstructedVariant)
@@ -348,9 +348,6 @@ class UnitDescriptor:
 
             def __init__(self):
                 pass
-
-            def _identity(self):
-                return None
 
             def __repr__(self):
                 return f"{cls.__name__}.{self.__name__}"

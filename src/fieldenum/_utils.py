@@ -42,23 +42,6 @@ class NotAllowed:
         raise NotAllowedError(self.error_message or f"The method/attribute {self.name!r} is not allowed to be used.")
 
 
-class KindError:
-    def __init__(self, message: str):
-        self.error_message = message
-
-    def __set_name__(self, owner, name):
-        self.private_name = "_" + name
-
-    def __get__(self, obj, objtype=None):
-        try:
-            return getattr(obj, self.private_name)
-        except AttributeError:
-            raise AttributeError(self.error_message) from None
-
-    def __set__(self, obj, value):
-        setattr(obj, self.private_name, value)
-
-
 class OneTimeSetter:
     def __set_name__(self, owner, name):
         self.private_name = f"__original_{name}"
@@ -68,7 +51,7 @@ class OneTimeSetter:
 
     def __set__(self, obj, value):
         if hasattr(obj, self.private_name):
-            raise ValueError("This attribute is frozen thus cannot mutate.")
+            raise TypeError(f"Attribute `{self.private_name.lstrip('__original_')}` is frozen thus cannot mutate.")
         setattr(obj, self.private_name, value)
 
 
