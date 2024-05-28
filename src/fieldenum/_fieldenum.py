@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copyreg
 import functools
+import types
 import typing
 import warnings
 from contextlib import suppress
@@ -45,22 +46,11 @@ class Variant:
     def check_type(self, field, value, /):
         """Should raise error when type is mismatched."""
 
-        if field is typing.Any or field is typing.Self:
+        if field in (typing.Any, typing.Self):
             return
 
-        if isinstance(field, typing.TypeVar):
+        if type(field) in (typing.TypeAlias, types.GenericAlias, typing.TypeVar, getattr(typing, "TypeAliasType", None)):
             return
-
-        if type(field) is typing.TypeAlias:  # TypeAlias doesn't accept isinstance or issubclass.
-            return
-
-        try:
-            TypeAliasType = typing.TypeAliasType
-        except AttributeError:  # TypeAliasType added in Python 3.12
-            pass
-        else:
-            if type(field) is TypeAliasType:
-                return
 
         try:
             if isinstance(value, field):
