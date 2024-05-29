@@ -100,8 +100,6 @@ class Variant:
 
         # fmt: off
         class ConstructedVariant(cls):
-            __name__ = item.name
-
             # Users can't disable slots since it's fatal for implementation.
             if frozen and not typing.TYPE_CHECKING:
                 __slots__ = tuple(f"__original_{name}" for name in item._slots_names)
@@ -127,6 +125,8 @@ class Variant:
 
         if tuple_field:
             class TupleConstructedVariant(ConstructedVariant):
+                __name__ = item.name
+                __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = tuple(range(len(tuple_field)))
                 __slots__ = ()
 
@@ -161,12 +161,14 @@ class Variant:
 
                     for name, field, value in zip(item._slots_names, tuple_field, args, strict=True):
                         if runtime_check:
-                            item.check_type(field, value)
+                            getattr(self, "check_type", item.check_type)(field, value)
                         setattr(self, name, value)
             self._actual = TupleConstructedVariant
 
         elif named_field:
             class NamedConstructedVariant(ConstructedVariant):
+                __name__ = item.name
+                __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = item._slots_names
                 __defaults__ = item._defaults
                 __slots__ = ()
@@ -212,12 +214,14 @@ class Variant:
                         field = named_field[name]
 
                         if runtime_check:
-                            item.check_type(field, value)
+                            getattr(self, "check_type", item.check_type)(field, value)
                         setattr(self, name, value)
             self._actual = NamedConstructedVariant
 
         else:
             class FieldlessConstructedVariant(ConstructedVariant, metaclass=ParamlessSingletonMeta):
+                __name__ = item.name
+                __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = ()
                 __slots__ = ()
 

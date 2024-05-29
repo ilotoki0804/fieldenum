@@ -80,8 +80,6 @@ def test_fields():
     _ = IpAddrKind.V4("127.0.0.1")
     _ = IpAddrKind.V6("::1")
 
-    from fieldenum import Unit, Variant, fieldenum, unreachable
-
     @fieldenum
     class IpAddrKind:
         V4 = Variant(int, int, int, int)

@@ -233,3 +233,38 @@ def test_repr():
     assert repr(Message.Write("hello!")) == "Message.Write('hello!')"
     assert repr(Message.ChangeColor(123, 456, 789)) == "Message.ChangeColor(123, 456, 789)"
     assert repr(Message.Pause()) == "Message.Pause()"
+
+    assert repr(Message.Quit) == "Message.Quit"
+    assert repr(Message.Move) == "<class 'fieldenum._fieldenum.Message.Move'>"
+    assert repr(Message.Write) == "<class 'fieldenum._fieldenum.Message.Write'>"
+    assert repr(Message.ChangeColor) == "<class 'fieldenum._fieldenum.Message.ChangeColor'>"
+    assert repr(Message.Pause) == "<class 'fieldenum._fieldenum.Message.Pause'>"
+
+
+def test_check_type() -> None:
+    class TypeCheckFailed(Exception):
+        pass
+
+    @fieldenum(runtime_check=True)
+    class Message:
+        Quit = Unit
+        Move = Variant(x=int, y=int)
+        Move2 = Variant(x=str, y=str)
+        Write = Variant(str)
+        ChangeColor = Variant(int, int, int)
+        ChangeColor2 = Variant(str, str, str)
+        Pause = Variant()
+
+        def check_type(self, field, value):
+            if field is int:
+                raise TypeCheckFailed()
+
+    Message.Quit
+    with pytest.raises(TypeCheckFailed):
+        Message.Move(x=1,y=2)
+    Message.Move2(x="1",y="2")
+    Message.Write("hello")
+    with pytest.raises(TypeCheckFailed):
+        Message.ChangeColor(1, 2, 3)
+    Message.ChangeColor2("1", "2", "3")
+    Message.Pause()
