@@ -35,3 +35,7 @@ message = Message.ChangeColor(256, 256, 0)
 ## Credits
 
 This project is heavily influenced by [Rust's `Enum`](https://doc.rust-lang.org/reference/items/enumerations.html), and also borrows some of its design from [rust_enum](https://github.com/girvel/rust_enum).
+
+## Releases
+
+* 0.1.0: initial release

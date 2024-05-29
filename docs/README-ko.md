@@ -1034,10 +1034,10 @@ from fieldenum import Unit, Variant, fieldenum, unreachable
 
 @fieldenum
 class Option[T]:
-    """실제 Option 구현을 단순화한 버전"""
+    """실제 Option 구현의 단순화된 버전"""
+
     Nothing = Unit
     Some = Variant(T)
-
 
     def unwrap(self: Option[T]) -> T:
         match self:
@@ -1087,7 +1087,7 @@ class Option[T]:
 
 이러한 `unreachable`의 사용은 없어도 99.9% 확률로 큰 문제가 없습니다. 따라서 빼먹더라도 재앙적인 일이 발생하지는 않으니 간단한 코드에서는 생략해도 됩니다.
 
-하지만 여러 사람이 사용하는 라이브러리 등에서는 `unreachable`을 통해 잘못된 타입 추론을 막는 것이 모두에게 좋습니다.
+하지만 여러 사람이 사용하는 라이브러리 등에서는 `unreachable`을 통해 잘못된 타입 추론을 막고 혹시 모를 미래에 생길 문제를 방지하는 것이 모두에게 좋습니다.
 
 #### `unreachable`을 사용하면 안 되는 경우
 
@@ -1110,7 +1110,7 @@ def get_message(message: Option[str]):
 get_message(123)  # will raise UnreachableError (XXX)
 ```
 
-그 대신 아래와 같이 짜세요.
+그 대신 아래와 같이 짜야 합니다:
 
 ```python
 def get_message(message: Option[str]):
@@ -1135,3 +1135,7 @@ get_message(123)  # will raise TypeError (GOOD)
 이 프로젝트는 [러스트의 `Enum`](https://doc.rust-lang.org/reference/items/enumerations.html)에서 크게 영향을 받았으며, [rust_enum](https://github.com/girvel/rust_enum)에서 일부 디자인을 차용하였습니다.
 
 또한 튜토리얼 중 일부는 [<러스트 프로그래밍 언어>의 '열거형 정의하기' 쳅터](https://doc.rust-kr.org/ch06-01-defining-an-enum.html)에서 발췌되었습니다.
+
+## Releases
+
+* 0.1.0: 첫 릴리즈
