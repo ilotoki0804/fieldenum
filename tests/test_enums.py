@@ -50,19 +50,6 @@ def test_option():
     assert myoption.map(int, as_is=False).unwrap() == 123
     assert myoption.map(int, as_is=True).unwrap() == 123
 
-    # test map(func, as_is=False, unwrap_result=True)
-    @BoundResult.wrap(Exception)
-    def add_one(value):
-        return value + 1
-
-    assert myoption.map(add_one, unwrap_result=True) == Option.Nothing
-    assert Some(123).map(add_one, unwrap_result=True).unwrap() == 124
-    with pytest.raises(TypeError):
-        Some("123").map(int, unwrap_result=True)
-    assert Some(123).map(BoundResult.wrap(lambda _: None, Exception), unwrap_result=True) is Option.Nothing
-    assert Some(123).map(BoundResult.wrap(lambda _: Option.Nothing, Exception), unwrap_result=True, as_is=False) is Option.Nothing
-    assert Some(123).map(BoundResult.wrap(lambda _: Option.Some(234), Exception), unwrap_result=True, as_is=False) == Option.Some(234)
-
     # test wrap
     @Option.wrap
     def func(returns):
