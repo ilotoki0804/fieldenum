@@ -49,7 +49,11 @@ class Variant:
         if field in (typing.Any, typing.Self):
             return
 
-        if type(field) in (typing.TypeAlias, types.GenericAlias, typing.TypeVar, getattr(typing, "TypeAliasType", None)):
+        if type(field) in (
+            typing.TypeAlias, types.GenericAlias, typing.TypeVar,  # typing-only things
+            getattr(typing, "TypeAliasType", None),  # type aliases (added in python 3.12)
+            str,  # possibly type alias
+        ):
             return
 
         try:
