@@ -5,6 +5,24 @@ description = "Rust-like fielded Enums in Python"
 authors = ["ilotoki0804 <ilotoki0804@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+keywords = [
+    "enum",
+    "dataclass",
+    "rust",
+    "functional-programming",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Natural Language :: Korean",
+    "Intended Audience :: Developers",
+    "Programming Language :: Rust",
+    "Typing :: Typed",
+]
+
+[tool.poetry.urls]
+Repository = "https://github.com/ilotoki0804/fieldenum"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -26,6 +44,7 @@ exclude_also = [
     "assert False",
     "if (typing\\.)?TYPE_CHECKING:",
     "@(typing\\.)?deprecated",
+    "@overload",
 ]
 
 [build-system]
