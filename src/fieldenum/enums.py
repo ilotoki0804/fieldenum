@@ -69,17 +69,6 @@ class Option[T]:
         /,
         *,
         as_is: Literal[True] = ...,
-        unwrap_result: Literal[False] = ...,
-    ) -> Option[U]: ...
-
-    @overload
-    def map[U](
-        self,
-        func: Callable[[T], BoundResult[U | None, Any]],
-        /,
-        *,
-        as_is: Literal[True] = ...,
-        unwrap_result: Literal[True] = ...,
     ) -> Option[U]: ...
 
     @overload
@@ -89,35 +78,13 @@ class Option[T]:
         /,
         *,
         as_is: Literal[False] = ...,
-        unwrap_result: Literal[False] =...,
     ) -> Option[U]: ...
 
-    @overload
-    def map[U](
-        self,
-        func: Callable[[T], BoundResult[Option[U] | U | None, Any]],
-        /,
-        *,
-        as_is: Literal[False] = ...,
-        unwrap_result: Literal[True] =...,
-    ) -> Option[U]: ...
-
-    def map(self, func, /, *, as_is=True, unwrap_result=False):
+    def map(self, func, /, *, as_is=True):
         if not self:
             return self
 
         result = func(self.unwrap())
-
-        if unwrap_result:
-            match result:
-                case BoundResult.Success(result, _):
-                    result
-
-                case BoundResult.Failed(_, _):
-                    return Option.Nothing
-
-                case value:  # This behavior may be changed
-                    raise TypeError(f"function must return BoundResult since unwrap_result is True. value: {value}")
 
         match result:
             case None:
