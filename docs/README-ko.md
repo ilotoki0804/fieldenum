@@ -103,7 +103,7 @@ class Message[T]:
 Message.Quit(123)  # OK
 Message.Stay[str]("hello")  # OK
 Message.Stay("hello")  # OK
-Message.Stay(123, "hello", {1: "world"})  # OK
+Message.Var3(123, "hello", {1: "world"})  # OK
 ```
 
 튜플의 값에는 타입이 적히는데, 이는 런타임에 확인되지는 않는 어노테이션에 가깝습니다.
@@ -252,7 +252,7 @@ class Option[T]:
 `Option`에 구현되어 있는 메서드는 옵션의 배리언트들인 `Nothing`이나 `Some`에서 사용될 수 있습니다.
 
 ```python
-Option.Nothing.unwrap()  # Unwrap failed.를 출력합니다.
+Option.Nothing.unwrap()  # TypeError(Unwrap failed.)를 raise합니다.
 print(Option.Some(123).unwrap())  # 123을 출력합니다.
 ```
 
@@ -850,7 +850,7 @@ class MaybeOption[T](Option[T]):  # XXX
             case Option.Some(value):
                 return value
 
-            case MaybeOption.Maybe:  # 새 메서드 추가
+            case MaybeOption.Maybe:  # 메서드 변경
                 return None
 
             case other:
@@ -1134,7 +1134,7 @@ get_message(123)  # will raise TypeError (GOOD)
 
 이 프로젝트는 [러스트의 `Enum`](https://doc.rust-lang.org/reference/items/enumerations.html)에서 크게 영향을 받았으며, [rust_enum](https://github.com/girvel/rust_enum)에서 일부 디자인을 차용하였습니다.
 
-또한 튜토리얼 중 일부는 [<러스트 프로그래밍 언어>의 '열거형 정의하기' 쳅터](https://doc.rust-kr.org/ch06-01-defining-an-enum.html)에서 발췌되었습니다.
+또한 튜토리얼 중 일부는 [<러스트 프로그래밍 언어>의 '열거형 정의하기' 쳅터](https://doc.rust-kr.org/ch06-01-defining-an-enum.html)에서 발췌했습니다.
 
 ## Releases
 
