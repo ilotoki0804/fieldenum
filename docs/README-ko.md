@@ -618,6 +618,39 @@ message = Message.Write("hello, world!")
 message = Message.ChangeColor(256, 256, 0)
 ```
 
+### 실제 사례: `ConcatOption`
+
+fieldenum는 이질적인 성격을 가진 설정들을 모아놓는 경우에 사용하기에 좋았습니다.
+제가 fieldenum을 만들게 된 직접적인 계기이기도 합니다.
+
+아래의 예시는 이미지가 여럿 들어 있는 디렉토리의 이미지들을 특정 기준을 통해
+이미지들을 세로로 결합시키는 기능을 가진 패키지에서 사용될 수 있는
+fieldenum의 예시입니다.
+
+각각의 요구사항에 따라 필요한 정보와 타입이 다르기에 키워드 인자 등으로 해결하기 매우 곤란합니다.
+fieldenum을 사용하면 문제를 우아하게 해결할 수 있습니다.
+
+```python
+from fieldenum import fieldenum, Variant, Unit
+
+@fieldenum
+class ConcatOption:
+    """이미지를 결합하는 기준을 설정합니다."""
+    All = Unit  # 모든 이미지를 결합합니다.
+    Count = Variant(int)  # 이미지를 설정된 개수만큼 결합합니다.
+    Height = Variant(int)  # 이미지의 세로 픽셀 수가 설정한 수 이상이 되도록 결합합니다.
+    Ratio = Variant(float)  # 이미지의 세로 픽셀 대 가로 픽셀 수 비 이상이 되도록 결합합니다.
+
+def concatenate(directory: Path, option: ConcatOption):
+    ...
+
+# 사용 예시들
+concatenate(Path("images/"), ConcatOption.All)
+concatenate(Path("images/"), ConcatOption.Count(5))
+concatenate(Path("images/"), ConcatOption.Height(3000))
+concatenate(Path("images/"), ConcatOption.Ratio(11.5))
+```
+
 ### 연결 리스트 예시
 
 다음은 [Rust By Example](https://doc.rust-lang.org/rust-by-example/custom_types/enum/testcase_linked_list.html)에서 찾을 수 있는 연결 리스트 구현 예시입니다.
