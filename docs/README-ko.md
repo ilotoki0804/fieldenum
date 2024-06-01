@@ -252,7 +252,7 @@ class Option[T]:
 `Option`에 구현되어 있는 메서드는 옵션의 배리언트들인 `Nothing`이나 `Some`에서 사용될 수 있습니다.
 
 ```python
-Option.Nothing.unwrap()  # TypeError(Unwrap failed.)를 raise합니다.
+Option.Nothing.unwrap()  # TypeError를 raise합니다.
 print(Option.Some(123).unwrap())  # 123을 출력합니다.
 ```
 
@@ -320,6 +320,8 @@ class Message:
 assert isinstance(Message.Write("hello!"), Message)
 ```
 
+## Examples
+
 ## `Option`
 
 `Option` 타입은 값이 있거나 없을 수 있는 아주 흔한 상황을 나타냅니다.
@@ -327,8 +329,10 @@ assert isinstance(Message.Write("hello!"), Message)
 파이썬 개발자들은 이런 상황을 위해 `Optional[T]`이나 `T | None`을 사용합니다.
 예를 들어 `Optional[str]`나 `str | None`이라고 적죠.
 
-`Option`은 `Optional`과 정말 비슷합니다. `Option[str]`은 `Optional[str]`과 같이
+`fieldenum.enums` 패키지에서 제공되는 `Option`은 `Optional`과 정말 비슷합니다. `Option[str]`은 `Optional[str]`과 같이
 값이 없거나 `str`이죠.
+
+하지만 여러 면에서 `Option`은 독특한 장점을 가집니다.
 
 다음의 예시를 살펴보세요.
 
@@ -355,7 +359,7 @@ match option:
 print(option.unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 같은 코드입니다.
 ```
 
-`Option`의 첫 번째 장점은 `Union`인 `Optional`아니 `str | None`과 달리 `Option`이 '실제 클래스'라는 점입니다.
+`Option`의 장점 중 하나는 `Union`인 `Optional`아니 `str | None`과 달리 `Option`이 '실제 클래스'라는 점입니다.
 따라서 실제 메소드들을 구현할 수 있습니다.
 
 예를 들어 위에서 보여드린 `.unwrap()` 메소드도 있고 그 외에도 `.map()` `.new()` 등의 함수도 존재합니다.
@@ -363,11 +367,10 @@ print(option.unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 �
 예를 들어 `int | None` 타입의 경우 값이 `None`일 때도 거짓으로 처리되지만, `0`일 때도 거짓이어서 참인지 거짓인지를 통해 `None`인지 `int`인지 구별하기 애매합니다.
 
 하지만 `Option`의 경우에는 안정적으로 `Nothing`일 때는 거짓, `Some`일 때는 참으로 처리할 수 있습니다.
+예를 들어 나음의 코드는 항상 `0`을 출력합니다.
 
 ```python
 from fieldenum.enums import Option, Some
-
-# following code will print `0`
 
 int_option = Option.Some(0)
 if int_option:  # evaluated as `True`
@@ -376,12 +379,173 @@ else:
     print("There's no value!")
 ```
 
-`.new()`의 경우에는 `Optional`을 `Option`으로 바꿔줍니다. 더 쉽게 말하면, `Option.new(None)`은 `Option.Nothing`을 반환하고, 다머지 경우에서는 `Option.new(value)`는 `Option.Some(value)`를 반환합니다.
+`.new()`는 `Optional`을 `Option`으로 바꿔줍니다. 더 쉽게 말하면, `Option.new(None)`은 `Option.Nothing`을 반환하고, 다머지 경우에서는 `Option.new(value)`는 `Option.Some(value)`를 반환합니다.
 
-`.map(func)`의 경우에는 `Option.Nothing`에서는 별 영향이 없고, `Option.Some(value)`에서는 `func(value)` 값을 `Option.new`안에 넣습니다.
+`.map(func)`는 `Option.Nothing`에서는 별 영향이 없고, `Option.Some(value)`에서는 `func(value)` 값을 `Option.new`안에 넣습니다.
 예를 들어 `Option.Nothing.map(str)`의 결과는 그대로 `Option.Nothing`이지만, `Option.Some(123).map(str)`의 결과는 `Option.Some('123')`입니다.
 
 이러한 기능들은 [PEP 505](https://peps.python.org/pep-0505/)의 부분적인 대안이 될 수 있습니다.
+
+### `Message` enum의 예시
+
+```python
+from fieldenum import fieldenum, Variant, Unit
+
+# define
+@fieldenum
+class Message:
+    Quit = Unit
+    Move = Variant(x=int, y=int)
+    Write = Variant(str)
+    ChangeColor = Variant(int, int, int)
+
+
+# usage
+message = Message.Quit
+message = Message.Move(x=1, y=2)
+message = Message.Write("hello, world!")
+message = Message.ChangeColor(256, 256, 0)
+```
+
+### 실제 사례: `ConcatOption`
+
+fieldenum는 이질적인 성격을 가진 설정들을 모아놓는 경우에 사용하기에 좋았습니다.
+제가 fieldenum을 만들게 된 직접적인 계기이기도 합니다.
+
+아래의 예시는 이미지가 여럿 들어 있는 디렉토리의 이미지들을 특정 기준을 통해
+이미지들을 세로로 결합시키는 기능을 가진 패키지에서 사용될 수 있는
+fieldenum의 예시입니다.
+
+각각의 요구사항에 따라 필요한 정보와 타입이 다르기에 키워드 인자 등으로 해결하기 매우 곤란합니다.
+fieldenum을 사용하면 문제를 우아하게 해결할 수 있습니다.
+
+```python
+from fieldenum import fieldenum, Variant, Unit
+
+@fieldenum
+class ConcatOption:
+    """이미지를 결합하는 기준을 설정합니다."""
+    All = Unit  # 모든 이미지를 결합합니다.
+    Count = Variant(int)  # 이미지를 설정된 개수만큼 결합합니다.
+    Height = Variant(int)  # 이미지의 세로 픽셀 수가 설정한 수 이상이 되도록 결합합니다.
+    Ratio = Variant(float)  # 이미지의 세로 픽셀 대 가로 픽셀 수 비 이상이 되도록 결합합니다.
+
+def concatenate(directory: Path, option: ConcatOption):
+    ...
+
+# 사용 예시들
+concatenate(Path("images/"), ConcatOption.All)
+concatenate(Path("images/"), ConcatOption.Count(5))
+concatenate(Path("images/"), ConcatOption.Height(3000))
+concatenate(Path("images/"), ConcatOption.Ratio(11.5))
+```
+
+### 연결 리스트 예시
+
+다음은 [Rust By Example](https://doc.rust-lang.org/rust-by-example/custom_types/enum/testcase_linked_list.html)에서 찾을 수 있는 연결 리스트 구현 예시입니다.
+
+```rust
+// 러스트에 대해 잘 모르신다면 이 원본 러스트 구현은 넘겨뛰고
+// 아래에 있는 fieldenum 구현을 확인해 보세요!
+
+use crate::List::*;
+
+enum List {
+    Cons(u32, Box<List>),
+    Nil,
+}
+
+impl List {
+    fn new() -> List {
+        Nil
+    }
+
+    fn prepend(self, elem: u32) -> List {
+        Cons(elem, Box::new(self))
+    }
+
+    fn len(&self) -> u32 {
+        match *self {
+            Cons(_, ref tail) => 1 + tail.len(),
+            Nil => 0
+        }
+    }
+
+    fn stringify(&self) -> String {
+        match *self {
+            Cons(head, ref tail) => {
+                format!("{}, {}", head, tail.stringify())
+            },
+            Nil => {
+                format!("Nil")
+            },
+        }
+    }
+}
+
+fn main() {
+    let mut list = List::new();
+
+    list = list.prepend(1);
+    list = list.prepend(2);
+    list = list.prepend(3);
+
+    println!("linked list has length: {}", list.len());
+    println!("{}", list.stringify());
+}
+```
+
+위의 러스트 코드는 아래와 같은 파이썬 코드로 변환할 수 있습니다.
+
+```python
+from __future__ import annotations
+
+from fieldenum import Unit, Variant, fieldenum, unreachable
+
+
+@fieldenum
+class List:
+    Cons = Variant(int, "List")
+    Nil = Unit
+
+    @classmethod
+    def new(cls) -> List:
+        return List.Nil
+
+    def prepend(self, elem: int) -> List:
+        return List.Cons(elem, self)
+
+    def __len__(self) -> int:
+        match self:
+            case List.Cons(_, tail):
+                return 1 + len(tail)
+
+            case List.Nil:
+                return 0
+
+            case other:
+                unreachable(other)
+
+    def __str__(self) -> str:
+        match self:
+            case List.Cons(head, tail):
+                return f"{head}, {tail}"
+
+            case List.Nil:
+                return "Nil"
+
+            case other:
+                unreachable(other)
+
+
+if __name__ == "__main__":
+    linked_list = List.new()
+    linked_list = linked_list.prepend(1)
+    linked_list = linked_list.prepend(2)
+    linked_list = linked_list.prepend(3)
+    print("length:", len(linked_list))  # length: 3
+    print(linked_list)  # 3, 2, 1, Nil
+```
 
 ## fieldenum 튜토리얼
 
@@ -602,166 +766,6 @@ m.call()  # Called by Message.Write("hello")!
 이 값은 `m.call()`이 실행될 때
 `call` 메서드 안에서 `self`가 될 것입니다.
 
-## Examples
-
-### `Message` enum의 예시
-
-```python
-from fieldenum import fieldenum, Variant, Unit
-
-# define
-@fieldenum
-class Message:
-    Quit = Unit
-    Move = Variant(x=int, y=int)
-    Write = Variant(str)
-    ChangeColor = Variant(int, int, int)
-
-
-# usage
-message = Message.Quit
-message = Message.Move(x=1, y=2)
-message = Message.Write("hello, world!")
-message = Message.ChangeColor(256, 256, 0)
-```
-
-### 실제 사례: `ConcatOption`
-
-fieldenum는 이질적인 성격을 가진 설정들을 모아놓는 경우에 사용하기에 좋았습니다.
-제가 fieldenum을 만들게 된 직접적인 계기이기도 합니다.
-
-아래의 예시는 이미지가 여럿 들어 있는 디렉토리의 이미지들을 특정 기준을 통해
-이미지들을 세로로 결합시키는 기능을 가진 패키지에서 사용될 수 있는
-fieldenum의 예시입니다.
-
-각각의 요구사항에 따라 필요한 정보와 타입이 다르기에 키워드 인자 등으로 해결하기 매우 곤란합니다.
-fieldenum을 사용하면 문제를 우아하게 해결할 수 있습니다.
-
-```python
-from fieldenum import fieldenum, Variant, Unit
-
-@fieldenum
-class ConcatOption:
-    """이미지를 결합하는 기준을 설정합니다."""
-    All = Unit  # 모든 이미지를 결합합니다.
-    Count = Variant(int)  # 이미지를 설정된 개수만큼 결합합니다.
-    Height = Variant(int)  # 이미지의 세로 픽셀 수가 설정한 수 이상이 되도록 결합합니다.
-    Ratio = Variant(float)  # 이미지의 세로 픽셀 대 가로 픽셀 수 비 이상이 되도록 결합합니다.
-
-def concatenate(directory: Path, option: ConcatOption):
-    ...
-
-# 사용 예시들
-concatenate(Path("images/"), ConcatOption.All)
-concatenate(Path("images/"), ConcatOption.Count(5))
-concatenate(Path("images/"), ConcatOption.Height(3000))
-concatenate(Path("images/"), ConcatOption.Ratio(11.5))
-```
-
-### 연결 리스트 예시
-
-다음은 [Rust By Example](https://doc.rust-lang.org/rust-by-example/custom_types/enum/testcase_linked_list.html)에서 찾을 수 있는 연결 리스트 구현 예시입니다.
-
-```rust
-use crate::List::*;
-
-enum List {
-    Cons(u32, Box<List>),
-    Nil,
-}
-
-impl List {
-    fn new() -> List {
-        Nil
-    }
-
-    fn prepend(self, elem: u32) -> List {
-        Cons(elem, Box::new(self))
-    }
-
-    fn len(&self) -> u32 {
-        match *self {
-            Cons(_, ref tail) => 1 + tail.len(),
-            Nil => 0
-        }
-    }
-
-    fn stringify(&self) -> String {
-        match *self {
-            Cons(head, ref tail) => {
-                format!("{}, {}", head, tail.stringify())
-            },
-            Nil => {
-                format!("Nil")
-            },
-        }
-    }
-}
-
-fn main() {
-    let mut list = List::new();
-
-    list = list.prepend(1);
-    list = list.prepend(2);
-    list = list.prepend(3);
-
-    println!("linked list has length: {}", list.len());
-    println!("{}", list.stringify());
-}
-```
-
-위의 러스트 코드는 아래와 같은 파이썬 코드로 변환할 수 있습니다.
-
-```python
-from __future__ import annotations
-
-from fieldenum import Unit, Variant, fieldenum, unreachable
-
-
-@fieldenum
-class List:
-    Cons = Variant(int, "List")
-    Nil = Unit
-
-    @classmethod
-    def new(cls) -> List:
-        return List.Nil
-
-    def prepend(self, elem: int) -> List:
-        return List.Cons(elem, self)
-
-    def __len__(self) -> int:
-        match self:
-            case List.Cons(_, tail):
-                return 1 + len(tail)
-
-            case List.Nil:
-                return 0
-
-            case other:
-                unreachable(other)
-
-    def __str__(self) -> str:
-        match self:
-            case List.Cons(head, tail):
-                return f"{head}, {tail}"
-
-            case List.Nil:
-                return "Nil"
-
-            case other:
-                unreachable(other)
-
-
-if __name__ == "__main__":
-    linked_list = List.new()
-    linked_list = linked_list.prepend(1)
-    linked_list = linked_list.prepend(2)
-    linked_list = linked_list.prepend(3)
-    print("length:", len(linked_list))  # length: 3
-    print(linked_list)  # 3, 2, 1, Nil
-```
-
 ## 할 수 있는 것과 해서는 안 되는 것
 
 ### 해서는 안 되는 것: 배리언트를 타입으로 내보내는 것
@@ -970,8 +974,7 @@ class Option[T]:
 
     @classmethod
     def new(cls, value: T | None) -> Self:
-        """실제 `Option.new()`의 구현"""
-
+        """실제 `Option.new()`의 구현의 단순화 버전"""
         match value:
             case None:
                 return Option.Nothing  # cls.Nothing이 아닌 Option.Nothing을 사용했습니다.
@@ -1020,7 +1023,7 @@ class VaildMessage:  # GOOD
 해당 결정에는 두 가지 이유가 있습니다.
 
 * 러스트 코드의 모양새를 최대한 따라가고자 했습니다. 타입 파라미터는 러스트의 모양새와는 그리 잘 맞지 않습니다.
-* 튜플 배리언트는 어느 정도 구현이 가능하지만, 이름 있는 필드에 대해서는 아예 표현이 불가능합니다. 예를 들어 `Variant[x=int, y=int]`는 `SyntaxError`가 나는 컴파일 불가능한 완전히 틀린 문법입니다.
+* 튜플 배리언트는 어느 정도 구현이 가능하지만, 이름 있는 필드에 대해서는 아예 표현이 불가능합니다. 예를 들어 `Variant[x=int, y=int]`는 `SyntaxError`가 나는 컴파일 불가능한 틀린 문법입니다.
 
 ### 왜 러스트의 named field와 비슷하게 생긴 딕셔너리 대신 keyword arguments를 사용하나요?
 
@@ -1034,7 +1037,7 @@ class VaildMessage:  # GOOD
 
 이는 만약 사용자가 `__init__`을 추가로 명시해 사용하더라도 마찬가지입니다.
 
-## Unit fieldless 배리언트 vs fieldless 배리언트
+## Unit 배리언트 vs fieldless 배리언트
 
 필드가 없는 값을 다룰 때는 두 가지 배리언트를 사용 가능합니다.
 첫 번째는 유닛 배리언트로, `()`를 통해 인스턴스화할 필요가 없이 바로 사용 가능한 배리언트입니다.
@@ -1065,7 +1068,7 @@ assert fieldless is NoFieldVariants.FieldlessVariant()
 
 ### `unreachable`의 사용법
 
-`unreachable`은 코드가 논리적으로 도달할 수 없지만 타입 체커의 한계나 하위 호환성이 없는 미래의 변화 등에 제대로 된 오류를 내보내기 위한 목적으로 사용됩니다.
+`unreachable`은 코드가 논리적으로 도달할 수 없지만 타입 체커를 위해서나 하위 호환성이 없는 미래의 변화 등에 제대로 된 오류를 내보내기 위한 목적으로 사용됩니다.
 
 다음의 경우를 확인해 봅시다.
 
@@ -1095,7 +1098,7 @@ class Option[T]:
 
 여기에는 세 가지 목적이 있습니다.
 
-* 이는 타입 체커가 발생할 수 없는 결과를 가정하는 것을 방지합니다. 해당 case가 없으면 타입 체커는 `unwrap` 함수가 매치되지 않고 통과할 가능성이 있다고 생각해 반환 타입을 `T | None`으로 잘못 인식합니다.
+* 이는 타입 체커가 발생할 수 없는 결과를 가정하는 것을 방지합니다. `unreachable`이 없으면 타입 체커는 `unwrap` 함수가 매치되지 않고 통과할 가능성이 있다고 생각해 반환 타입을 `T | None`으로 잘못 인식합니다.
 * 이는 `self`에 `Option` 이외의 타입이 왔을 때 생길 수 있는 오류를 방지합니다. 사용자가 `self`에 `Option` 외의 타입을 전달하면 조용히 `None`이 반환되는 것이 아니라 오류를 내보냅니다.
 * 이는 미래의 하위 호환성 없는 변화가 일어났을 때 생길 수 있는 오류를 방지합니다.
 
@@ -1125,7 +1128,7 @@ class Option[T]:
 
 이렇게 되면 기존의 코드들의 하위 호환성이 깨지게 되는데, 이때 `unreachable`을 사용한 `.unwrap()`의 구현은 오류를 통해 현재 상태가 잘못되어 보인다고 명확하게 알립니다.
 
-이러한 `unreachable`의 사용은 없어도 99.9% 확률로 큰 문제가 없습니다. 따라서 빼먹더라도 재앙적인 일이 발생하지는 않으니 간단한 코드에서는 생략해도 됩니다.
+이러한 `unreachable`의 사용은 없어도 99.9% 확률로 큰 문제가 없습니다(혹은 *없어야 합니다*). 따라서 빼먹더라도 재앙적인 일이 발생하지는 않으니 간단한 코드에서는 생략해도 됩니다.
 
 하지만 여러 사람이 사용하는 라이브러리 등에서는 `unreachable`을 통해 잘못된 타입 추론을 막고 혹시 모를 미래에 생길 문제를 방지하는 것이 모두에게 좋습니다.
 
