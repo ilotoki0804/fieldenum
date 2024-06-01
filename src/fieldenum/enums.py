@@ -20,7 +20,10 @@ class Option[T]:
     Some = Variant(T)
 
     @classmethod
-    def new(cls, value: T | None) -> Self:
+    def new(cls, value: T | None | Self, as_is=False) -> Self:
+        if as_is and isinstance(value, Option):
+            return value
+
         match value:
             case None:
                 return Option.Nothing
