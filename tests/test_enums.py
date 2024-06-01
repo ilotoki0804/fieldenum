@@ -58,6 +58,7 @@ def test_option():
     assert func(1233) == Some(1233)
     assert func(None) == Option.Nothing
 
+
 def test_bound_result():
     _ = BoundResult[int, Exception].map(
         BoundResult.Success(123, Exception), str
@@ -75,7 +76,9 @@ def test_bound_result():
 
     assert BoundResult.Success(2342, Exception).map(str, as_is=True) == BoundResult.Success("2342", Exception)
     error = ValueError(123)
-    assert BoundResult.Success(2342, Exception).map(lambda _: BoundResult.Failed(error, Exception), as_is=True).unwrap() == BoundResult.Failed(error, Exception)
+    assert BoundResult.Success(2342, Exception).map(
+        lambda _: BoundResult.Failed(error, Exception), as_is=True
+    ).unwrap() == BoundResult.Failed(error, Exception)
     error = ValueError(1234)
     assert BoundResult.Failed(error, Exception).map(str, as_is=True) == BoundResult.Failed(error, Exception)
 
@@ -135,4 +138,6 @@ def test_bound_result_wrap(second_param):
 
     assert Success("hello", ValueError).map(lambda x: exception_bound_func(None, x)) == Success("hello", ValueError)
     error = ValueError("hello")
-    assert BoundResult.Failed(error, ValueError).map(lambda x: exception_bound_func(None, x), as_is=False) == BoundResult.Failed(error, ValueError)
+    assert BoundResult.Failed(error, ValueError).map(
+        lambda x: exception_bound_func(None, x), as_is=False
+    ) == BoundResult.Failed(error, ValueError)

@@ -271,8 +271,8 @@ def test_check_type() -> None:
 
     Message.Quit
     with pytest.raises(TypeCheckFailed):
-        Message.Move(x=1,y=2)
-    Message.Move2(x="1",y="2")
+        Message.Move(x=1, y=2)
+    Message.Move2(x="1", y="2")
     Message.Write("hello")
     with pytest.raises(TypeCheckFailed):
         Message.ChangeColor(1, 2, 3)

@@ -119,7 +119,6 @@ def test_runtime():
 def test_list():
     from fieldenum import Unit, Variant, fieldenum, unreachable
 
-
     @fieldenum
     class List:
         Cons = Variant(int, "List")
@@ -153,7 +152,6 @@ def test_list():
 
                 case other:
                     unreachable(other)
-
 
     linked_list = List.new()
     linked_list = linked_list.prepend(1)

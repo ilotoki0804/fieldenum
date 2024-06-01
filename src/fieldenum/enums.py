@@ -109,9 +109,7 @@ class Option[T]:
         return self is not Option.Nothing
 
     @classmethod
-    def wrap[**Params, Return](
-        cls, func: Callable[Params, Return | None], /
-    ) -> Callable[Params, Option[Return]]:
+    def wrap[**Params, Return](cls, func: Callable[Params, Return | None], /) -> Callable[Params, Option[Return]]:
         @functools.wraps(func)
         def decorator(*args: Params.args, **kwargs: Params.kwargs) -> Option[Return]:
             return Option.new(func(*args, **kwargs))
