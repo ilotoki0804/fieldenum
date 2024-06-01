@@ -65,22 +65,22 @@ class Option[T]:
     @overload
     def map[U](
         self,
-        func: Callable[[T], U | None],
-        /,
-        *,
-        as_is: Literal[True] = ...,
-    ) -> Option[U]: ...
-
-    @overload
-    def map[U](
-        self,
         func: Callable[[T], Option[U] | U | None],
         /,
         *,
         as_is: Literal[False] = ...,
     ) -> Option[U]: ...
 
-    def map(self, func, /, *, as_is=True):
+    @overload
+    def map[U](
+        self,
+        func: Callable[[T], U | None],
+        /,
+        *,
+        as_is: Literal[True] = ...,
+    ) -> Option[U]: ...
+
+    def map(self, func, /, *, as_is=False):
         if not self:
             return self
 
