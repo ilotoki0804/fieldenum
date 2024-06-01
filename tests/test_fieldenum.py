@@ -42,10 +42,12 @@ def test_miscs():
     assert Message.Move(y=325) == Message.Move(x=234569834, y=325)
 
     with pytest.raises(TypeError):
+        @fieldenum
         class TupleDefault:
             Move = Variant(int, int).with_default(a=123)
 
     with pytest.raises(TypeError):
+        @fieldenum
         class UnitDefault:
             Move = Variant().with_default(a=123)
 

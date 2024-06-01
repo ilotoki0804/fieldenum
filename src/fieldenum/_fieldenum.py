@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copyreg
-import functools
 import types
 import typing
 import warnings
