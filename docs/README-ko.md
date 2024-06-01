@@ -787,7 +787,7 @@ def hello() -> Option:  # GOOD
     return Option.Some("hello")
 
 def print_hello(option: Option):  # GOOD
-    print(value.unwrap())
+    print(option.unwrap())
 
 value = hello()
 print_hello(value)
