@@ -320,6 +320,69 @@ class Message:
 assert isinstance(Message.Write("hello!"), Message)
 ```
 
+## `Option`
+
+`Option` 타입은 값이 있거나 없을 수 있는 아주 흔한 상황을 나타냅니다.
+
+파이썬 개발자들은 이런 상황을 위해 `Optional[T]`이나 `T | None`을 사용합니다.
+예를 들어 `Optional[str]`나 `str | None`이라고 적죠.
+
+`Option`은 `Optional`과 정말 비슷합니다. `Option[str]`은 `Optional[str]`과 같이
+값이 없거나 `str`이죠.
+
+다음의 예시를 살펴보세요.
+
+```python
+from fieldenum.enums import Option, Some
+
+optional: str | None = input("Type anything!") or None
+option = Option.new(input("Type anything!") or None)
+
+# Union을 사용한 경우 다음과 같은 코드는 타입 체커 오류를 일으키고, 런타임 오류의 가능성이 있습니다.
+print(optional.upper())  # 어쩔 때는 오류가 나고 어쩔 때는 아닙니다.
+
+# 이렇게 사용하는 것은 아예 불가능하고, 이는 런타임에서도 명백합니다.
+print(option.upper())  # 항상 오류가 발생합니다.
+
+# 그 대신, 사용자는 다음과 같이 명시적으로 값을 변환시켜야 합니다.
+match option:
+    case Some(value):
+        print(value.upper())
+
+    case Option.Nothing:
+        print("Nothing to show.")
+
+print(option.unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 같은 코드입니다.
+```
+
+`Option`의 첫 번째 장점은 `Union`인 `Optional`아니 `str | None`과 달리 `Option`이 '실제 클래스'라는 점입니다.
+따라서 실제 메소드들을 구현할 수 있습니다.
+
+예를 들어 위에서 보여드린 `.unwrap()` 메소드도 있고 그 외에도 `.map()` `.new()` 등의 함수도 존재합니다.
+또한 `bool()`같은 속성도 안정적으로 구현할 수 있습니다.
+예를 들어 `int | None` 타입의 경우 값이 `None`일 때도 거짓으로 처리되지만, `0`일 때도 거짓이어서 참인지 거짓인지를 통해 `None`인지 `int`인지 구별하기 애매합니다.
+
+하지만 `Option`의 경우에는 안정적으로 `Nothing`일 때는 거짓, `Some`일 때는 참으로 처리할 수 있습니다.
+
+```python
+from fieldenum.enums import Option, Some
+
+# following code will print `0`
+
+int_option = Option.Some(0)
+if int_option:  # evaluated as `True`
+    print(int_option)
+else:
+    print("There's no value!")
+```
+
+`.new()`의 경우에는 `Optional`을 `Option`으로 바꿔줍니다. 더 쉽게 말하면, `Option.new(None)`은 `Option.Nothing`을 반환하고, 다머지 경우에서는 `Option.new(value)`는 `Option.Some(value)`를 반환합니다.
+
+`.map(func)`의 경우에는 `Option.Nothing`에서는 별 영향이 없고, `Option.Some(value)`에서는 `func(value)` 값을 `Option.new`안에 넣습니다.
+예를 들어 `Option.Nothing.map(str)`의 결과는 그대로 `Option.Nothing`이지만, `Option.Some(123).map(str)`의 결과는 `Option.Some('123')`입니다.
+
+이러한 기능들은 [PEP 505](https://peps.python.org/pep-0505/)의 부분적인 대안이 될 수 있습니다.
+
 ## fieldenum 튜토리얼
 
 > 이 파트의 대부분은 [<러스트 프로그래밍 언어>의 '열거형 정의하기' 쳅터](https://doc.rust-kr.org/ch06-01-defining-an-enum.html) 내용을 fieldenum의 경우에 맞게 변경한 것입니다.
@@ -538,62 +601,6 @@ m.call()  # Called by Message.Write("hello")!
 이 예제에서 생성한 변수 `m`은  `Message.Write("hello")` 값을 갖게 되고,
 이 값은 `m.call()`이 실행될 때
 `call` 메서드 안에서 `self`가 될 것입니다.
-
-### `Option`
-
-`Option` 타입은 값이 있거나 없을 수 있는 아주 흔한 상황을 나타냅니다.
-
-파이썬 개발자들은 이런 상황을 위해 `Optional[T]`이나 `T | None`을 사용합니다.
-예를 들어 `Optional[str]`나 `str | None`이라고 적죠.
-
-`Option`은 `Optional`과 정말 비슷합니다. `Option[str]`은 `Optional[str]`과 같이
-값이 없거나 `str`이죠.
-
-다음의 예시를 살펴보세요.
-
-```python
-from fieldenum.enums import Option, Some
-
-optional: str | None = input("Type anything!") or None
-option = Option.new(input("Type anything!") or None)
-
-# Union을 사용한 경우 다음과 같은 코드는 타입 체커 오류를 일으키고, 런타임 오류의 가능성이 있습니다.
-print(optional.upper())  # 어쩔 때는 오류가 나고 어쩔 때는 아닙니다.
-
-# 이렇게 사용하는 것은 아예 불가능하고, 이는 런타임에서도 명백합니다.
-print(option.upper())  # 항상 오류가 발생합니다.
-
-# 그 대신, 사용자는 다음과 같이 명시적으로 값을 변환시켜야 합니다.
-match option:
-    case Some(value):
-        print(value.upper())
-
-    case Option.Nothing:
-        print("Nothing to show.")
-
-print(option.unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 같은 코드입니다.
-```
-
-`Option`의 첫 번째 장점은 `Union`인 `Optional`아니 `str | None`과 달리 `Option`이 '실제 클래스'라는 점입니다.
-따라서 실제 메소드들을 구현할 수 있습니다.
-
-예를 들어 위에서 보여드린 `.unwrap()` 메소드도 있고 그 외에도 `.map()` `.wrap()` 등의 함수도 존재합니다.
-또한 `bool()`같은 속성도 안정적으로 구현할 수 있습니다.
-예를 들어 `int | None` 타입의 경우 값이 `None`일 때도 거짓으로 처리되지만, `0`일 때도 거짓이어서 참인지 거짓인지를 통해 `None`인지 `int`인지 구별하기 애매합니다.
-
-하지만 `Option`의 경우에는 안정적으로 `Nothing`일 때는 거짓, `Some`일 때는 참으로 처리할 수 있습니다.
-
-```python
-from fieldenum.enums import Option, Some
-
-# following code will print `0`
-
-int_option = Option.Some(0)
-if int_option:  # evaluated as `True`
-    print(int_option)
-else:
-    print("There's no value!")
-```
 
 ## Examples
 
