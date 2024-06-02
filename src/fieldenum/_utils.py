@@ -23,7 +23,7 @@ def unpickle(cls, name: str, state: tuple | dict | None):
         return variant(**state)
 
 
-copyreg.constructor(unpickle)  # type: ignore # supressing incorrect type checker error
+copyreg.constructor(unpickle)  # type: ignore # suppressing incorrect type checker error
 
 
 class NotAllowed:
