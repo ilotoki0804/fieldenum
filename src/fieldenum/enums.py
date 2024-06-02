@@ -21,7 +21,7 @@ class Option[T]:
 
     @classmethod
     def new(cls, value: T | None | Self, as_is=False) -> Self:
-        if as_is and isinstance(value, Option):
+        if not as_is and isinstance(value, Option):
             return value
 
         match value:
@@ -281,12 +281,12 @@ if TYPE_CHECKING:
     class Success[R, E](BoundResult[R, E]):
         __match_args__ = ("result", "bound")
 
-        def __init__(self, result: R, Bound: type[E], /): ...
+        def __init__(self, result: R, bound: type[E], /): ...
 
     class Failed[R, E](BoundResult[R, E]):
         __match_args__ = ("result", "bound")
 
-        def __init__(self, result: E, Bound: type[E], /): ...
+        def __init__(self, result: E, bound: type[E], /): ...
 
 else:
     Some = Option.Some

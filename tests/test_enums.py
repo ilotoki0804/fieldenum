@@ -11,7 +11,11 @@ def test_option():
 
     # test new
     assert Option.new(123) == Option.Some(123)
-    assert Option.new(None) == Option.Nothing
+    assert Option.new(Option.Some(123)) == Option.Some(123)
+    assert Option.new(Option.Some(123), as_is=True) == Option.Some(Option.Some(123))
+    assert Option.new(None) is Option.Nothing
+    assert Option.new(Option.Nothing) == Option.Nothing
+    assert Option.new(Option.Nothing, as_is=True) == Option.Some(Option.Nothing)
 
     # test unwrap
     option = Option.Some(123)
