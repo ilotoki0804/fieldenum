@@ -255,7 +255,7 @@ class BoundResult[R, E: BaseException]:
                 return inner
 
             case _, _, *params:
-                raise TypeError(f"Recieved unexpected parameter(s): {params}")
+                raise TypeError(f"Received unexpected parameter(s): {params}")
 
             case other:
                 unreachable(other)

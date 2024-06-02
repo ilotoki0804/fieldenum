@@ -36,7 +36,7 @@ pip install fieldenum
 ```python
 from fieldenum import Variant, Unit, fieldenum
 
-@fieldenum  # filedenum으로 감싸면 만들어집니다. 깜박하고 안 쓰면 안 됩니다!
+@fieldenum  # fieldenum으로 감싸면 만들어집니다. 깜박하고 안 쓰면 안 됩니다!
 class Message:
     Quit = Unit  # 유닛 배리언트는 다음과 같이 정의합니다.
     Write = Variant(str)  # 튜플 배리언트는 다음과 같이 정의합니다.
@@ -75,7 +75,7 @@ if message is Message.Quit:
 match message:
     case Message.Quit:
         print("Quit!")
-    
+
     case Message.Stay:
         print("Stay!")
 ```
@@ -964,7 +964,7 @@ class InvalidMessage:  # XXX
 
 
 @fieldenum
-class VaildMessage:  # GOOD
+class ValidMessage:  # GOOD
     Quit = Unit
     Move = Variant(x=int, y=int)
     Write = Variant(str)
@@ -1142,10 +1142,10 @@ class Option[T]:
 def get_message(message: Option[str]):
     match message:
         case Some(value):
-            print("Recieved:", value)
+            print("Received:", value)
 
         case Option.Nothing:
-            print("Nothing recived.")
+            print("Nothing received.")
 
         case other:
             unreachable(other)  # XXX: 타입 체커를 어겨서 이곳에 도달할 수 있습니다.
@@ -1159,13 +1159,13 @@ get_message(123)  # will raise UnreachableError (XXX)
 def get_message(message: Option[str]):
     match message:
         case Some(value):
-            print("Recieved:", value)
+            print("Received:", value)
 
         case Option.Nothing:
-            print("Nothing recived.")
+            print("Nothing received.")
 
         case other:
-            raise TypeError(f"Expect `Option` but recieved {other}.")  # GOOD
+            raise TypeError(f"Expect `Option` but received {other}.")  # GOOD
 
 get_message(123)  # will raise TypeError (GOOD)
 ```

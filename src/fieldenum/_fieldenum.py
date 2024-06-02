@@ -106,7 +106,7 @@ class Variant:
                     __slots__ += ("_hash",)
 
                 for name in item._slots_names:
-                    # prevent potential secruity risk
+                    # prevent potential security risk
                     if name.isidentifier():
                         exec(f"{name} = OneTimeSetter()")
                     else:
