@@ -319,7 +319,7 @@ class UnitDescriptor:
             raise TypeError("`self.name` is not set.")
 
         # fmt: off
-        class UnitConstructedVariant(cls, metaclass=ParamlessSingletonMeta):  # TODO
+        class UnitConstructedVariant(cls, metaclass=ParamlessSingletonMeta):
             __name__ = self.name
             __slots__ = ()
             __fields__ = None  # `None` means it does not accept initializing.

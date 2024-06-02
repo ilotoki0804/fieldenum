@@ -1,6 +1,6 @@
 # fieldenum
 
-파이썬에서의 러스트 스타일의 필드형 Enum
+파이썬에서의 러스트 스타일의 필드형 enum
 
 **[English Docs](/README.md)**
 
@@ -8,7 +8,7 @@
 
 러스트의 여러 킬러 기능 중에서도 단연 가장 돋보이는 것은 enum입니다.
 함수형 프로그래밍의 개념을 차용한 이 enum은 매우 강력한데,
-이는 바로 필드를 가질 수 있다는 점입니다.
+그중에서도 돋보이는 점은 바로 필드를 가질 수 있다는 점입니다.
 
 파이썬에도 이미 `Enum`이라는 기본 패키지가 있으나, 이는 필드를 사용할 수가 없습니다.
 반대로 `dataclass`라는 패키지도 있으나, 이는 enum처럼 선택지의 개념이 존재하지 않습니다.
@@ -25,10 +25,6 @@ pip install fieldenum
 ```
 
 메인 파트는 파이썬 3.10 이상에서 호환됩니다. 다만, 하위 모듈인 `fieldenum.enums`는 파이썬 3.12 이상에서만 사용 가능합니다.
-
-## Railroad Oriented Programming
-
-fieldenum에서 사용 가능한 예외의 대안인 Railroad Oriented Programming의 자세한 설명을 보고 싶다면 [BoundResult를 통한 ROP](railroad-oriented-ko.ipynb)을 확인하세요.
 
 ## 사용 방법
 
@@ -254,53 +250,6 @@ class Option[T]:
 ```python
 Option.Nothing.unwrap()  # TypeError를 raise합니다.
 print(Option.Some(123).unwrap())  # 123을 출력합니다.
-```
-
-### 대략적인 실제 구현 모사
-
-다음과 같은 enum이 있다고 해 봅시다.
-
-```python
-from fieldenum import fieldenum, Variant
-
-@fieldenum
-class Message:
-    Quit = Unit
-    Move = Variant(x=int, y=int)
-    Write = Variant(str)
-    ChangeColor = Variant(int, int, int)
-
-    def say_loud(self):
-        if self is not Message.Quit:
-            print(self)
-```
-
-위의 fieldenum은 아래의 코드와 유사합니다:
-
-```python
-class Message:
-    def say_loud(self):
-        if self is not Message.Quit:
-            print(self)
-
-QuitMessage = Message()
-class MoveMessage(Message):
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
-class WriteMessage(Message):
-    def __init__(self, _0: str, /):
-        self._0 = _0
-class ChangeColorMessage(Message):
-    def __init__(self, _0: int, _1: int, _2: int, /):
-        self._0 = _0
-        self._1 = _1
-        self._2 = _2
-
-Message.Quit = QuitMessage
-Message.Move = MoveMessage
-Message.Write = WriteMessage
-Message.ChangeColor = ChangeColorMessage
 ```
 
 ## `isinstance()`
@@ -547,6 +496,10 @@ if __name__ == "__main__":
     print(linked_list)  # 3, 2, 1, Nil
 ```
 
+## Railroad Oriented Programming
+
+fieldenum에서 사용 가능한 예외의 대안인 Railroad Oriented Programming의 자세한 설명을 보고 싶다면 [BoundResult를 통한 ROP](railroad-oriented-ko.ipynb)을 확인하세요.
+
 ## fieldenum 튜토리얼
 
 > 이 파트의 대부분은 [<러스트 프로그래밍 언어>의 '열거형 정의하기' 쳅터](https://doc.rust-kr.org/ch06-01-defining-an-enum.html) 내용을 fieldenum의 경우에 맞게 변경한 것입니다.
@@ -766,9 +719,9 @@ m.call()  # Called by Message.Write("hello")!
 이 값은 `m.call()`이 실행될 때
 `call` 메서드 안에서 `self`가 될 것입니다.
 
-## 할 수 있는 것과 해서는 안 되는 것
+## 안티 패턴
 
-### 해서는 안 되는 것: 배리언트를 타입으로 내보내는 것
+<!-- ### 배리언트 자체를 타입으로 사용하는 것
 
 하나의 배리언트의 값을 내보내고 싶을 때 다음과 같이 배리언트를 타입으로 처리하고 싶을 수 있습니다.
 
@@ -776,10 +729,8 @@ m.call()  # Called by Message.Write("hello")!
 from fieldenum import fieldenum, Variant, Unit
 from fieldenum.enums import Option
 
-
 def hello() -> Option.Some:  # XXX
     return Option.Some("hello")
-
 
 def print_hello(option: Option.Some):  # XXX
     print(option.unwrap())
@@ -806,11 +757,11 @@ print_hello(value)
 
 마찬가지로 여러 배리언트를 Union으로 묶어 (예: `Option.Nothing | Option.Some`) 사용하는 것도 피해야 합니다.
 
-명백하게 이득이 되는 것이 아니라면 이러한 방식으로 사용하는 것을 자제해 주세요.
+명백하게 이득이 되는 것이 아니라면 이러한 방식으로 사용하는 것을 자제해 주세요. -->
 
 ### 필드의 타입으로 Union을 사용하는 것
 
-다음과 같이 배리언트의 필드에 Union을 사용하는 것도 금지되지는 않지만 말리고 싶습니다.
+다음과 같이 배리언트의 필드에 Union을 사용하는 것은 금지되지는 않지만 말리고 싶습니다.
 그 대신 두 개의 다른 배리언트로 나누는 것을 고려해 보세요.
 
 ```python
@@ -1037,6 +988,53 @@ class VaildMessage:  # GOOD
 
 이는 만약 사용자가 `__init__`을 추가로 명시해 사용하더라도 마찬가지입니다.
 
+### 대략적인 실제 구현 모사
+
+다음과 같은 enum이 있다고 해 봅시다.
+
+```python
+from fieldenum import fieldenum, Variant
+
+@fieldenum
+class Message:
+    Quit = Unit
+    Move = Variant(x=int, y=int)
+    Write = Variant(str)
+    ChangeColor = Variant(int, int, int)
+
+    def say_loud(self):
+        if self is not Message.Quit:
+            print(self)
+```
+
+위의 fieldenum은 아래의 코드와 유사합니다:
+
+```python
+class Message:
+    def say_loud(self):
+        if self is not Message.Quit:
+            print(self)
+
+QuitMessage = Message()
+class MoveMessage(Message):
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+class WriteMessage(Message):
+    def __init__(self, _0: str, /):
+        self._0 = _0
+class ChangeColorMessage(Message):
+    def __init__(self, _0: int, _1: int, _2: int, /):
+        self._0 = _0
+        self._1 = _1
+        self._2 = _2
+
+Message.Quit = QuitMessage
+Message.Move = MoveMessage
+Message.Write = WriteMessage
+Message.ChangeColor = ChangeColorMessage
+```
+
 ## Unit 배리언트 vs fieldless 배리언트
 
 필드가 없는 값을 다룰 때는 두 가지 배리언트를 사용 가능합니다.
@@ -1062,6 +1060,8 @@ assert isinstance(fieldless, NoFieldVariants)
 assert unit is NoFieldVariants.UnitVariant
 assert fieldless is NoFieldVariants.FieldlessVariant()
 ```
+
+fieldless 배리언트의 경우에도 싱글톤이라는 점을 기억해 주세요.
 
 일반적으로는 유닛 배리언트를 사용하는 것이 권장되지만, 만약 fieldless 배리언트가 더 어울리는 경우가 있다면
 사용해도 좋습니다.
