@@ -5,10 +5,6 @@ class FieldEnumError(Exception):
     pass
 
 
-class NotAllowedError(FieldEnumError):
-    pass
-
-
 class Unreachable(BaseException):
     pass
 

@@ -10,8 +10,6 @@ import copyreg
 import typing
 from contextlib import suppress
 
-from .exceptions import NotAllowedError
-
 
 def unpickle(cls, name: str, state: tuple | dict | None):
     variant = getattr(cls, name)
@@ -39,7 +37,7 @@ class NotAllowed:
         if objtype is None:
             return self
 
-        raise NotAllowedError(self.error_message or f"The method/attribute {self.name!r} is not allowed to be used.")
+        raise TypeError(self.error_message or f"The method/attribute {self.name!r} is not allowed to be used.")
 
 
 class OneTimeSetter:

@@ -6,7 +6,6 @@ from typing import Any, Self
 import pytest
 from fieldenum import Unit, Variant, fieldenum, unreachable
 from fieldenum._utils import NotAllowed
-from fieldenum.exceptions import NotAllowedError
 
 
 @fieldenum
@@ -19,7 +18,7 @@ class Message:
 
 
 def test_miscs():
-    with pytest.raises(NotAllowedError):
+    with pytest.raises(TypeError):
         Message()
 
     with pytest.raises(TypeError):
