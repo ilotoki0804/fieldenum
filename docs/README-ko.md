@@ -10,8 +10,8 @@
 함수형 프로그래밍의 개념을 차용한 이 enum은 매우 강력한데,
 그중에서도 돋보이는 점은 바로 필드를 가질 수 있다는 점입니다.
 
-파이썬에도 이미 `Enum`이라는 기본 패키지가 있으나, 이는 필드를 사용할 수가 없습니다.
-반대로 `dataclass`라는 패키지도 있으나, 이는 enum처럼 선택지의 개념이 존재하지 않습니다.
+파이썬에도 이미 `enum`이라는 기본 모듈이 있으나, 이는 필드를 사용할 수가 없습니다.
+반대로 `dataclass`도 기본적으로 지원되나, 이는 enum처럼 선택지의 개념이 존재하지 않습니다.
 
 fieldenum은 러스트와 거의 비슷하면서도 파이썬의 문법과 잘 어울리는 필드가 있는 enum을 사용할 수 있도록 합니다.
 또한 이를 통해 Railroad Oriented Programming이나 `Option`과 같은 여러 함수형 프로그래밍의 개념을 활용할 수 있게 됩니다.
@@ -604,12 +604,12 @@ loopback = IpAddr(kind=IpAddrKind.V6, address="::1")
 from fieldenum import Variant, Unit, fieldenum, unreachable
 
 @fieldenum
-class IpAddrKind:
+class IpAddr:
     V4 = Variant(str)
     V6 = Variant(str)
 
-home = IpAddrKind.V4("127.0.0.1")
-loopback = IpAddrKind.V6("::1")
+home = IpAddr.V4("127.0.0.1")
+loopback = IpAddr.V6("::1")
 ```
 
 enum의 각 배리언트에 직접 데이터를 붙임으로써, dataclass를 사용할 필요가
@@ -666,34 +666,6 @@ class Message:
 * `Write`은 하나의 `str`을 가집니다.
 * `ChangeColor`는 세 개의 `int`를 가집니다.
 
-예제에서처럼 배리언트로 fieldenum을 정의하는 것은 다른 종류의 dataclass들을
-정의하는 것과 비슷합니다. fieldenum이 dataclass와 다른 점은 모든 배리언트가 `Message` 타입으로 묶인다는 것입니다.
-아래 dataclass들은 이전 fieldenum의 배리언트가 갖는 것과 비슷한 타입의 역할을 합니다.
-있습니다:
-
-```python
-class Message:
-    pass
-
-QuitMessage = Message()  # sentinel
-class MoveMessage(Message):
-    def __init__(self, *, x: int, y: int):
-        self.x = x
-        self.y = y
-class WriteMessage(Message):
-    def __init__(self, _0: str, /):
-        self._0 = _0
-class ChangeColorMessage(Message):
-    def __init__(self, _0: int, _1: int, _2: int, /):
-        self._0 = _0
-        self._1 = _1
-        self._2 = _2
-```
-
-각기 다른 타입을 갖는 여러 개의 dataclass를 사용한다면, 이 메시지 중 어떤 한 가지를
-인수로 받는 함수를 정의할 때 `Union`을 사용해야 합니다. `Message`
-fieldenum은 하나의 타입으로 이것이 가능합니다.
-
 fieldenum에 추가적인 메소드를 정의할 수 있습니다. 여기 `Message` fieldenum에
 정의한 `call`이라는 메서드가 있습니다:
 
@@ -707,17 +679,17 @@ class Message:
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
 
-    def call(self):
-        print(f"Called by {self}!")
+    def process(self):
+        print(f"Processing `{self}`...")
 
 m = Message.Write("hello")
-m.call()  # Called by Message.Write("hello")!
+m.process()  # Processing `Message.Write("hello")`...
 ```
 
 메서드 본문에서는 `self`를 사용하여 호출한 fieldenum의 값을 가져올 것입니다.
 이 예제에서 생성한 변수 `m`은  `Message.Write("hello")` 값을 갖게 되고,
-이 값은 `m.call()`이 실행될 때
-`call` 메서드 안에서 `self`가 될 것입니다.
+이 값은 `m.process()`이 실행될 때
+`process` 메서드 안에서 `self`가 될 것입니다.
 
 ## 안티 패턴
 
@@ -776,34 +748,24 @@ class InvalidIoResult:
 @fieldenum
 class ValidIoResult:
     Success = Variant(content=str)
-    ErrorWithCode = Variant(int)
-    ErrorWithMessage = Variant(str)
+    ErrorCode = Variant(int)
+    ErrorMessage = Variant(str)
 ```
 
 ## 디자인
 
-### Subclassing
+### 상속 금지
 
 러스트의 enum이 그렇듯 fieldenum 또한 상속이 가능하지 않습니다. 이는 런타임에서도 저지됩니다.
 
-상속이 제한되어야 하는 이유는 두 가지로 이야기해볼 수 있습니다.
+이는 메서드를 그대로 사용할 수 있다는 상속의 가장 큰 이유가 fieldenum에게는 무의미하고,
+상속의 특성이 fieldenum에서 해롭게 작용하기 때문입니다.
 
-#### 배리언트가 추가되어야 하는 경우
-
-`Option`에 배리언트가 추가되어야 한다고 해봅시다. 예를 들어 `Option`에 `Maybe`를 추가한다고 생각해 볼까요?
+예를 들어 봅시다. 만약 모종의 사유로 `Option` 배리언트에 `Maybe`를 추가하고 싶다고 해 봅시다.
 
 ```python
 from fieldenum import fieldenum, Variant, Unit
-from fieldenum.enums import Option
 
-@fieldenum
-class MaybeOption[T](Option[T]):  # XXX
-    Maybe = Unit
-```
-
-이렇게 하면 문제가 생깁니다. 바로 `Option`에서 사용되었던 기존의 모든 메서드가 망가진다는 점입니다.
-
-```python
 @fieldenum
 class Option[T]:
     """실제 Option 구현의 단순화 버전"""
@@ -824,12 +786,22 @@ class Option[T]:
                 unreachable(other)
 
     ...
+
+@fieldenum
+class MaybeOption[T](Option[T]):  # XXX
+    Maybe = Unit
 ```
 
-`Option`에 `Maybe`를 추가해 버리면 `Maybe` 배리언트에서 `unwrap`을 사용하면 `UnreachableError`가 납니다.
+이렇게 하면 문제가 생깁니다. 바로 `Option`에서 사용되었던 기존의 모든 메서드가 망가진다는 점입니다.
 
-`UnreachableError`는 코드에 버그가 있을 때 생기는 오류인데, 이 경우에는 버그가 아니니 다른 방식으로 처리되도록
-메서드를 변경해야 합니다.
+예를 들어 `Maybe` 배리언트에서 `unwrap`을 사용하면 `UnreachableError`가 나게 됩니다.
+
+```python
+MaybeOption.Maybe.unwrap()  # UnreachableError
+```
+
+`UnreachableError`는 코드에 버그가 있을 때 생기는 오류인데, 이 경우에는 버그가 아니니 `Maybe`가 처리되도록
+메서드를 직접 변경해야 합니다.
 
 ```python
 @fieldenum
@@ -879,38 +851,86 @@ class MaybeOption[T]:
                 unreachable(other)
 ```
 
-#### 메서드가 추가되어야 하는 경우
+물론 새로운 배리언트를 추가하는 것인 아닌 새로운 메서드를 추가하기 위해
+상속을 고려해 볼 수도 있습니다.
 
-특정한 메서드를 추가하기 위해 서브클래싱을 사용하는 경우도 있을 것입니다.
-
-그 경우에도 특별한 이득이 없습니다. 구현상의 이유로 그 메서드는 사용할 수 없기 때문입니다.
+하지만 구현상의 이유로 그 메서드는 사용할 수 없기 때문에 사실상 무의미합니다.
 
 ```python
 from fieldenum import fieldenum, Variant, Unit
 from fieldenum.enums import Option
 
 @fieldenum
-class OptionWithNewMethod[T](Option[T]):
-    def kind_message(self):
+class DebuggableOption[T](Option[T]):
+    def debug(self):
         match self:
-            case OptionWithNewMethod.Nothing:
+            case DebuggableOption.Nothing:
                 print("Nothing here...")
 
-            case OptionWithNewMethod.Some(value):
+            case DebuggableOption.Some(value):
                 print(f"here is {value}!")
 
 # 마치 작동하는 것처럼 보입니다.
-opt = OptionWithNewMethod.Some(123)
-# AttributeError / 실제로는 kind_message는 존재하지 않습니다.
-opt.kind_message()
-# 왜냐하면 `opt`은 `OptionWithNewMethod`의 인스턴스가 아니기 때문입니다!
-assert not isinstance(opt, OptionWithNewMethod)
+opt = DebuggableOption.Some(123)
+# AttributeError가 raise됩니다. 실제로는 debug라는 메서드는 존재하지 않기 때문입니다.
+opt.debug()
+# 왜냐하면 `opt`은 `DebuggableOption`의 인스턴스가 아니기 때문입니다!
+assert not isinstance(opt, DebuggableOption)
 # 그 대신 `opt`는 `Option`의 인스턴스입니다(정확히는 `Option`의 서브클래스(Option의 배리언트)의 인스턴스입니다).
 assert isinstance(opt, Option)
 ```
 
-구현을 변경해서 메서드를 사용할 수 있도록 만들 수도 있지만 그렇게 하더라도
-파편화만 유발하고 사용할 만한 이유가 없기 때문에 그렇게 할 이유가 없습니다.
+구현을 변경하면 서브클래싱이 가능하게 할 수도 있습니다.
+그러나 이는 fieldenum에 대한 근본적인 가정을 흐트러뜨립니다.
+
+예를 들어 매우 전형적인 `append_option`이라는 함수를 정의해 봅시다.
+
+```python
+from collections.abc import MutableSequence
+
+from fieldenum import fieldenum, Variant, Unit
+from fieldenum.enums import Option, Some
+
+def append_option(sequence: MutableSequence, option: Option):
+    # 이 단언문을 통해 타입 힌트를 위반한 코드가 걸러집니다.
+    assert isinstance(option, Option)
+
+    # 설명을 위한 예시입니다. 실제로는
+    # myoption.map(mylist.append)를 사용하면 됩니다!
+    match option:
+        # option은 Option.Nothing | Option.Some으로 볼 수 있습니다.
+        case Option.Some(value):
+            sequence.append(value)
+
+        case Option.Nothing:
+            pass
+
+        # 이 코드를 통해 프로그램에 '명백한 오류'가 있을 시
+        # 빠르게 잡아낼 수 있습니다.
+        case other:
+            unreachable(other)
+
+
+mylist = []
+append_option(mylist, Some(1))  # 1이 append됩니다.
+assert mylist == [1]
+append_option(mylist, Some(2))  # 2가 append됩니다.
+assert mylist == [1, 2]
+append_option(mylist, Option.Nothing)  # 아무것도 append되지 않습니다.
+assert mylist == [1, 2]
+```
+
+만약 서브클래싱을 허용한다면 위의 코드는 완전히 무너지게 됩니다.
+
+```python
+append_option(mylist, DebuggableOption.Some(1))  # UnreachableError
+```
+
+위의 코드를 실행하면 `DebuggableOption.Some(1)`는 `Option`의 서브클래스이지만,
+동시에 `Option.Some`도, `Option.Nothing`도 아니기에 `UnreachableError`를 발생시키게 됩니다.
+
+이는 타입 체커에게조차도 완전히 유효한 코드이기 때문에 잡아내기 쉽지 않으며,
+fieldenum을 사용하는 근본적인 목적을 흐리기 때문에 금지됩니다.
 
 #### 영향
 
@@ -973,7 +993,7 @@ class ValidMessage:  # GOOD
 
 해당 결정에는 두 가지 이유가 있습니다.
 
-* 러스트 코드의 모양새를 최대한 따라가고자 했습니다. 타입 파라미터는 러스트의 모양새와는 그리 잘 맞지 않습니다.
+* 러스트 코드의 모양새를 최대한 따라가고자 했습니다. 타입 파라미터는 러스트의 모양새와는 다릅니다.
 * 튜플 배리언트는 어느 정도 구현이 가능하지만, 이름 있는 필드에 대해서는 아예 표현이 불가능합니다. 예를 들어 `Variant[x=int, y=int]`는 `SyntaxError`가 나는 컴파일 불가능한 틀린 문법입니다.
 
 ### 왜 러스트의 named field와 비슷하게 생긴 딕셔너리 대신 keyword arguments를 사용하나요?
@@ -1069,6 +1089,9 @@ fieldless 배리언트의 경우에도 싱글톤이라는 점을 기억해 주�
 ### `unreachable`의 사용법
 
 `unreachable`은 코드가 논리적으로 도달할 수 없지만 타입 체커를 위해서나 하위 호환성이 없는 미래의 변화 등에 제대로 된 오류를 내보내기 위한 목적으로 사용됩니다.
+
+이 함수는 작성한 코드에 분명한 버그가 있을 때 나타나도록 디자인되어 있습니다.
+사용자가 버그가 아닌 코드에서 `UnreachableError`를 만나는 일이 없도록 주의해 주세요.
 
 다음의 경우를 확인해 봅시다.
 
@@ -1169,9 +1192,6 @@ def get_message(message: Option[str]):
 
 get_message(123)  # will raise TypeError (GOOD)
 ```
-
-`unreachable`의 코드에는 '이 예외를 받았다면 버그이니 개발자에게 문의하세요'라는 메시지가 있습니다.
-사용자가 버그가 아닌 코드에서 `UnreachableError`를 만나는 일이 없도록 주의해 주세요.
 
 ## Credits
 

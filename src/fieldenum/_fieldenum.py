@@ -65,13 +65,13 @@ class Variant:
             )
             return
 
-        raise TypeError(f"Given type is invalid. Type: {field}, value: {value}")
+        raise TypeError(f"Type of value is not expected. Expected type: {field!r}, actual type: {type(value)!r} and value: {value!r}")
 
     def with_default(self, **defaults) -> typing.Self:
         """**Experimental Feature**"""
         _, named_field = self.field
         if not named_field:
-            raise TypeError("Only named variants can get defaults.")
+            raise TypeError("Only named variants can have defaults.")
 
         self._defaults = defaults
         return self
@@ -86,10 +86,8 @@ class Variant:
         frozen: bool,
         runtime_check: bool,
     ) -> None | typing.Self:
-        # print(f"{self.name} is attached to {cls.__name__}")
-
         if self.attached:
-            raise TypeError("Fieldenums are not subclassable.")
+            raise TypeError(f"This variants already attached to {self._base.__name__!r}.")
 
         self._base = cls
         tuple_field, named_field = self.field
@@ -131,9 +129,7 @@ class Variant:
 
                 if build_hash:
                     if frozen:
-                        def __hash__(self):
-                            # hashing is too expensive, thus cached.
-
+                        def __hash__(self) -> int:
                             with suppress(AttributeError):
                                 return self._hash
 
@@ -156,7 +152,7 @@ class Variant:
 
                 def __init__(self, *args) -> None:
                     if len(tuple_field) != len(args):
-                        raise TypeError("Argument length is not matched.")
+                        raise TypeError(f"Expect {len(tuple_field)} field(s), but received {len(args)} argument(s).")
 
                     for name, field, value in zip(item._slots_names, tuple_field, args, strict=True):
                         if runtime_check:
@@ -174,9 +170,7 @@ class Variant:
 
                 if build_hash:
                     if frozen:
-                        def __hash__(self):
-                            # hashing is too expensive, thus cached.
-
+                        def __hash__(self) -> int:
                             with suppress(AttributeError):
                                 return self._hash
 
@@ -312,7 +306,7 @@ class UnitDescriptor:
         *,
         eq: bool,  # not needed since nothing to check equality
         build_hash: bool,
-        frozen: bool,  # always frozen since nothing to change
+        frozen: bool,
         runtime_check: bool,  # nothing to check
     ):
         if self.name is None:
@@ -322,10 +316,10 @@ class UnitDescriptor:
         class UnitConstructedVariant(cls, metaclass=ParamlessSingletonMeta):
             __name__ = self.name
             __slots__ = ()
-            __fields__ = None  # `None` means it does not accept initializing.
+            __fields__ = None  # `None` means it does not require calling for initialize.
 
             if build_hash and not frozen:
-                __hash__ = None  # type: ignore
+                __hash__ = None  # type: ignore # Explicitly disable hash
             else:
                 def __hash__(self):
                     return hash(id(self))
@@ -370,14 +364,18 @@ def fieldenum(
             runtime_check=runtime_check,
         )
 
+    # Preventing subclassing fieldenums at runtime.
+    # This also prevent double decoration.
     is_final = False
     for base in cls.mro()[1:]:
         with suppress(Exception):
             if base.__final__:
                 is_final = True
                 break
-    if is_final:  # fieldenum is always final.
-        raise TypeError("Class subclassed final class, which can include another fieldenum.")
+    if is_final:
+        raise TypeError("One of the base classes of fieldenum class is marked as final, "
+                        "which means it does not want to be subclassed and it may be fieldenum class, "
+                        "which should not be subclassed.")
 
     class_attributes = vars(cls)
 
@@ -392,6 +390,6 @@ def fieldenum(
             )
 
     with suppress(Exception):
-        cls.__init__ = NotAllowed("Base fieldenums are cannot initialized.", name="__init__")
+        cls.__init__ = NotAllowed("Base fieldenums cannot be initialized.", name="__init__")
 
     return typing.final(cls)
