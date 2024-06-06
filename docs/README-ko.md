@@ -794,13 +794,13 @@ class MaybeOption[T](Option[T]):  # XXX
 
 이렇게 하면 문제가 생깁니다. 바로 `Option`에서 사용되었던 기존의 모든 메서드가 망가진다는 점입니다.
 
-예를 들어 `Maybe` 배리언트에서 `unwrap`을 사용하면 `UnreachableError`가 나게 됩니다.
+예를 들어 `Maybe` 배리언트에서 `unwrap`을 사용하면 `Unreachable` 오류가 나게 됩니다.
 
 ```python
-MaybeOption.Maybe.unwrap()  # UnreachableError
+MaybeOption.Maybe.unwrap()  # Unreachable
 ```
 
-`UnreachableError`는 코드에 버그가 있을 때 생기는 오류인데, 이 경우에는 버그가 아니니 `Maybe`가 처리되도록
+`Unreachable` 오류는 코드에 버그가 있을 때 생기는 오류인데, 이 경우에는 버그가 아니니 `Maybe`가 처리되도록
 메서드를 직접 변경해야 합니다.
 
 ```python
@@ -923,11 +923,11 @@ assert mylist == [1, 2]
 만약 서브클래싱을 허용한다면 위의 코드는 완전히 무너지게 됩니다.
 
 ```python
-append_option(mylist, DebuggableOption.Some(1))  # UnreachableError
+append_option(mylist, DebuggableOption.Some(1))  # Unreachable
 ```
 
 위의 코드를 실행하면 `DebuggableOption.Some(1)`는 `Option`의 서브클래스이지만,
-동시에 `Option.Some`도, `Option.Nothing`도 아니기에 `UnreachableError`를 발생시키게 됩니다.
+동시에 `Option.Some`도, `Option.Nothing`도 아니기에 `Unreachable` 오류를 발생시키게 됩니다.
 
 이는 타입 체커에게조차도 완전히 유효한 코드이기 때문에 잡아내기 쉽지 않으며,
 fieldenum을 사용하는 근본적인 목적을 흐리기 때문에 금지됩니다.
@@ -1091,7 +1091,7 @@ fieldless 배리언트의 경우에도 싱글톤이라는 점을 기억해 주�
 `unreachable`은 코드가 논리적으로 도달할 수 없지만 타입 체커를 위해서나 하위 호환성이 없는 미래의 변화 등에 제대로 된 오류를 내보내기 위한 목적으로 사용됩니다.
 
 이 함수는 작성한 코드에 분명한 버그가 있을 때 나타나도록 디자인되어 있습니다.
-사용자가 버그가 아닌 코드에서 `UnreachableError`를 만나는 일이 없도록 주의해 주세요.
+사용자가 버그가 아닌 코드에서 `Unreachable` 오류를 만나는 일이 없도록 주의해 주세요.
 
 다음의 경우를 확인해 봅시다.
 
@@ -1173,7 +1173,7 @@ def get_message(message: Option[str]):
         case other:
             unreachable(other)  # XXX: 타입 체커를 어겨서 이곳에 도달할 수 있습니다.
 
-get_message(123)  # will raise UnreachableError (XXX)
+get_message(123)  # will raise Unreachable (XXX)
 ```
 
 그 대신 아래와 같이 짜야 합니다:
