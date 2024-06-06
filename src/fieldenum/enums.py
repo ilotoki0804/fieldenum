@@ -273,19 +273,28 @@ class Message:
 
 if TYPE_CHECKING:
     class Some[T](Option[T]):
-        __match_args__ = ("value",)
+        __match_args__ = ("_0",)
+        __fields__ = ("_0")
 
         def __init__(self, value: T, /): ...
 
+        def dump(self) -> tuple[T]: ...
+
     class Success[R, E](BoundResult[R, E]):
-        __match_args__ = ("result", "bound")
+        __match_args__ = ("_0", "_1")
+        __fields__ = ("_0", "_1")
 
         def __init__(self, result: R, bound: type[E], /): ...
 
+        def dump(self) -> tuple[R, E]: ...
+
     class Failed[R, E](BoundResult[R, E]):
-        __match_args__ = ("result", "bound")
+        __match_args__ = ("_0", "_1")
+        __fields__ = ("_0", "_1")
 
         def __init__(self, result: E, bound: type[E], /): ...
+
+        def dump(self) -> tuple[R, E]: ...
 
 else:
     Some = Option.Some
