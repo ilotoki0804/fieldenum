@@ -378,13 +378,14 @@ def fieldenum(
                         "which should not be subclassed.")
 
     class_attributes = vars(cls)
+    has_own_hash = "__hash__" in class_attributes
 
-    for attrname, attr in class_attributes.items():
-        if isinstance(attr, Variant) or isinstance(attr, UnitDescriptor):
+    for attr in class_attributes.values():
+        if isinstance(attr, Variant | UnitDescriptor):
             attr.attach(
                 cls,
                 eq=eq,
-                build_hash=eq and "__hash__" not in class_attributes,
+                build_hash=eq and not has_own_hash,
                 frozen=frozen,
                 runtime_check=runtime_check,
             )
