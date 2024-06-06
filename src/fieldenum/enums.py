@@ -6,14 +6,13 @@ import functools
 from typing import TYPE_CHECKING, Any, Callable, Literal, Self, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
-from .exceptions import UnwrapFailedError
 
 __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 
 _MISSING = object()
 
 
-@final  # a redundant decorator for type checkers
+@final  # A additional decorator for type checkers.
 @fieldenum
 class Option[T]:
     Nothing = Unit
@@ -40,7 +39,7 @@ class Option[T]:
     def unwrap(self, default: T = _MISSING) -> T:
         match self:
             case Option.Nothing if default is _MISSING:
-                raise UnwrapFailedError("Unwrap failed.")
+                raise ValueError("Unwrap failed.")
 
             case Option.Nothing:
                 return default
@@ -57,7 +56,7 @@ class Option[T]:
                 raise value_or_error
 
             case Option.Nothing:
-                raise UnwrapFailedError(value_or_error)
+                raise ValueError(value_or_error)
 
             case Option.Some(value):
                 return value
@@ -116,7 +115,7 @@ class Option[T]:
         return decorator
 
 
-@final  # a redundant decorator for type checkers
+@final  # A additional decorator for type checkers.
 @fieldenum
 class BoundResult[R, E: BaseException]:
     Success = Variant(R, type[E])
@@ -261,7 +260,7 @@ class BoundResult[R, E: BaseException]:
                 unreachable(other)
 
 
-@final  # a redundant decorator for type checkers
+@final  # A additional decorator for type checkers.
 @fieldenum
 class Message:
     """Test fieldenum to play with."""

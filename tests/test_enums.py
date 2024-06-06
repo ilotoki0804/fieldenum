@@ -3,7 +3,6 @@
 import pytest
 from fieldenum import *
 from fieldenum.enums import *
-from fieldenum.exceptions import UnwrapFailedError
 
 
 def test_option():
@@ -24,7 +23,7 @@ def test_option():
     assert option.unwrap(456) == 123
     option = Option.Nothing
     assert option is Option.Nothing
-    with pytest.raises(UnwrapFailedError):
+    with pytest.raises(ValueError):
         option.unwrap()
     assert option.unwrap("default") == "default"
 
@@ -33,7 +32,7 @@ def test_option():
     assert option.expect("message") == "hello"
     assert option.expect(ValueError("message")) == "hello"
     option = Option.Nothing
-    with pytest.raises(UnwrapFailedError, match="message"):
+    with pytest.raises(ValueError, match="message"):
         option.expect("message")
     with pytest.raises(ValueError, match="message"):
         option.expect(ValueError("message"))
