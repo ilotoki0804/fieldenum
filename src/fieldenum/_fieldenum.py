@@ -97,14 +97,10 @@ class Variant:
 
         # fmt: off
         class ConstructedVariant(cls):
-            # Users can't disable slots since it's fatal for implementation.
             if frozen and not typing.TYPE_CHECKING:
                 __slots__ = tuple(f"__original_{name}" for name in item._slots_names)
-                if build_hash:
-                    __slots__ += ("_hash",)
-
                 for name in item._slots_names:
-                    # prevent potential security risk
+                    # to prevent potential security risk
                     if name.isidentifier():
                         exec(f"{name} = OneTimeSetter()")
                     else:
@@ -113,21 +109,18 @@ class Variant:
             else:
                 __slots__ = item._slots_names
 
-            if tuple_field:
-                __match_args__ = item._slots_names
-
-            if eq:
-                def __eq__(self, other: typing.Self):
-                    return type(self) is type(other) and self.dump() == other.dump()
-
         if tuple_field:
             class TupleConstructedVariant(ConstructedVariant):
                 __name__ = item.name
                 __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = tuple(range(len(tuple_field)))
                 __slots__ = ()
+                __match_args__ = item._slots_names
+                __items = tuple_field
 
                 if build_hash:
+                    __slots__ += ("_hash",)
+
                     if frozen:
                         def __hash__(self) -> int:
                             with suppress(AttributeError):
@@ -137,6 +130,10 @@ class Variant:
                             return self._hash
                     else:
                         __hash__ = None  # type: ignore
+
+                if eq:
+                    def __eq__(self, other: typing.Self):
+                        return type(self) is type(other) and self.dump() == other.dump()
 
                 def __repr__(self) -> str:
                     values_repr = ", ".join(repr(getattr(self, f"_{name}" if isinstance(name, int) else name)) for name in self.__fields__)
@@ -169,6 +166,8 @@ class Variant:
                 __slots__ = ()
 
                 if build_hash:
+                    __slots__ += ("_hash",)
+
                     if frozen:
                         def __hash__(self) -> int:
                             with suppress(AttributeError):
@@ -178,6 +177,10 @@ class Variant:
                             return self._hash
                     else:
                         __hash__ = None  # type: ignore
+
+                if eq:
+                    def __eq__(self, other: typing.Self):
+                        return type(self) is type(other) and self.dump() == other.dump()
 
                 @staticmethod
                 def _pickle(variant):
