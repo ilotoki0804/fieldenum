@@ -12,7 +12,7 @@ __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 _MISSING = object()
 
 
-@final  # A additional decorator for type checkers.
+@final  # A redundant decorator for type checkers.
 @fieldenum
 class Option[T]:
     Nothing = Unit
@@ -115,7 +115,7 @@ class Option[T]:
         return decorator
 
 
-@final  # A additional decorator for type checkers.
+@final  # A redundant decorator for type checkers.
 @fieldenum
 class BoundResult[R, E: BaseException]:
     Success = Variant(R, type[E])
@@ -260,7 +260,7 @@ class BoundResult[R, E: BaseException]:
                 unreachable(other)
 
 
-@final  # A additional decorator for type checkers.
+@final  # A redundant decorator for type checkers.
 @fieldenum
 class Message:
     """Test fieldenum to play with."""

@@ -22,7 +22,7 @@ class Variant:
         self, obj, objtype=None
     ) -> typing.Self:  # Type as Self minimizes type checker errors, but it makes match statement very noisy.
         if self.attached:
-            # This is needed in order to make match statemtents work.
+            # This is needed in order to make match statements work.
             return self._actual  # type: ignore
 
         return self
