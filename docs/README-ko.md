@@ -6,7 +6,7 @@
 
 ## Introduction
 
-러스트의 여러 킬러 기능 중에서도 단연 가장 돋보이는 것은 enum입니다.
+러스트의 여러 킬러 기능 중에서도 단연 돋보이는 것은 enum입니다.
 함수형 프로그래밍의 개념을 차용한 이 enum은 매우 강력한데,
 그중에서도 돋보이는 점은 바로 필드를 가질 수 있다는 점입니다.
 
@@ -252,7 +252,7 @@ Option.Nothing.unwrap()  # TypeError를 raise합니다.
 print(Option.Some(123).unwrap())  # 123을 출력합니다.
 ```
 
-## `isinstance()`
+### `isinstance()`
 
 모든 배리언트는 원본 enum 클래스의 인스턴스입니다. 따라서 `isinstance(message, Message)`와 같이 `isinstance()`를 통해 해당 enum인지를 쉽게 확인할 수 있습니다.
 
@@ -271,7 +271,7 @@ assert isinstance(Message.Write("hello!"), Message)
 
 ## Examples
 
-## `Option`
+### `Option`
 
 `Option` 타입은 값이 있거나 없을 수 있는 아주 흔한 상황을 나타냅니다.
 
@@ -305,10 +305,10 @@ match option:
     case Option.Nothing:
         print("Nothing to show.")
 
-print(option.unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 같은 코드입니다.
+print(option.map(str.upper).unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 같은 코드입니다.
 ```
 
-`Option`의 장점 중 하나는 `Union`인 `Optional`아니 `str | None`과 달리 `Option`이 '실제 클래스'라는 점입니다.
+`Option`의 장점 중 하나는 `Union`이나 `Optional`과 달리 '실제 클래스'라는 점입니다.
 따라서 실제 메소드들을 구현할 수 있습니다.
 
 예를 들어 위에서 보여드린 `.unwrap()` 메소드도 있고 그 외에도 `.map()` `.new()` 등의 함수도 존재합니다.
@@ -316,7 +316,7 @@ print(option.unwrap("Nothing to show."))  # 위에 있던 코드와 완전히 �
 예를 들어 `int | None` 타입의 경우 값이 `None`일 때도 거짓으로 처리되지만, `0`일 때도 거짓이어서 참인지 거짓인지를 통해 `None`인지 `int`인지 구별하기 애매합니다.
 
 하지만 `Option`의 경우에는 안정적으로 `Nothing`일 때는 거짓, `Some`일 때는 참으로 처리할 수 있습니다.
-예를 들어 나음의 코드는 항상 `0`을 출력합니다.
+예를 들어 다음의 코드는 항상 `0`을 출력합니다.
 
 ```python
 from fieldenum.enums import Option, Some
@@ -498,7 +498,8 @@ if __name__ == "__main__":
 
 ## Railroad Oriented Programming
 
-fieldenum에서 사용 가능한 예외의 대안인 Railroad Oriented Programming의 자세한 설명을 보고 싶다면 [BoundResult를 통한 ROP](railroad-oriented-ko.ipynb)을 확인하세요.
+Railroad Oriented Programming은 파이썬의 '예외' 시스템을 대체하는 특이한 방법의 프로그래밍입니다.
+[BoundResult를 통한 ROP](railroad-oriented-ko.ipynb) 문서를 확인해 보세요.
 
 ## fieldenum 튜토리얼
 
@@ -1055,7 +1056,7 @@ Message.Write = WriteMessage
 Message.ChangeColor = ChangeColorMessage
 ```
 
-## Unit 배리언트 vs fieldless 배리언트
+### Unit 배리언트 vs fieldless 배리언트
 
 필드가 없는 값을 다룰 때는 두 가지 배리언트를 사용 가능합니다.
 첫 번째는 유닛 배리언트로, `()`를 통해 인스턴스화할 필요가 없이 바로 사용 가능한 배리언트입니다.
@@ -1192,6 +1193,10 @@ def get_message(message: Option[str]):
 
 get_message(123)  # will raise TypeError (GOOD)
 ```
+
+### `Option.Some` vs `Some`
+
+`enums` 모듈에는 `Option` fieldenum도 제공하며 동시에 `Option`의 배리언트인 `Some`도 
 
 ## Credits
 
