@@ -118,7 +118,6 @@ class Variant:
                 __fields__ = tuple(range(len(tuple_field)))
                 __slots__ = ()
                 __match_args__ = item._slots_names
-                __items = tuple_field
 
                 if build_hash:
                     __slots__ += ("_hash",)
