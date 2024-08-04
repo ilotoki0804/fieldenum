@@ -42,7 +42,7 @@ class OneTimeSetter:
 
     def __set__(self, obj, value):
         if hasattr(obj, self.private_name):
-            raise TypeError(f"Attribute `{self.private_name.lstrip('__original_')}` is frozen thus cannot mutate.")
+            raise TypeError(f"Field `{self.private_name.lstrip('__original_')}` is frozen thus cannot mutate.")
         setattr(obj, self.private_name, value)
 
 
