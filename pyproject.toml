@@ -9,11 +9,13 @@ keywords = [
     "enum",
     "dataclass",
     "rust",
-    "functional-programming",
+    "functional",
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Natural Language :: Korean",
     "Intended Audience :: Developers",
@@ -25,7 +27,7 @@ classifiers = [
 Repository = "https://github.com/ilotoki0804/fieldenum"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 
 [tool.poetry.group.dev.dependencies]
 pytest-cov = "^5.0.0"
@@ -36,6 +38,9 @@ notebook = "^7.2.0"
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+ignore = ["F821"]
 
 [tool.coverage.report]
 exclude_also = [
