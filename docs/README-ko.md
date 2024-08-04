@@ -694,7 +694,7 @@ m.process()  # Processing `Message.Write("hello")`...
 
 ## 안티 패턴
 
-<!-- ### 배리언트 자체를 타입으로 사용하는 것
+### 배리언트 자체를 타입으로 사용하는 것
 
 하나의 배리언트의 값을 내보내고 싶을 때 다음과 같이 배리언트를 타입으로 처리하고 싶을 수 있습니다.
 
@@ -712,7 +712,7 @@ value = hello()
 print_hello(value)
 ```
 
-그 대신 함수는 `Option`을 값으로 넘겨 해당 값의 사용자가 처리하도록 해야 합니다.
+그 대신 함수는 `Option`타입으로 처리하는 것이 더 적절하지는 않을지 고려해 보세요.
 
 ```python
 from fieldenum import fieldenum, Variant, Unit, unreachable
@@ -728,9 +728,11 @@ value = hello()
 print_hello(value)
 ```
 
-마찬가지로 여러 배리언트를 Union으로 묶어 (예: `Option.Nothing | Option.Some`) 사용하는 것도 피해야 합니다.
+이렇게 하면 추후에 내부 구현을 변경할 때 외부 API를 변경할 필요가 없어 안정성을 올릴 수 있습니다.
 
-명백하게 이득이 되는 것이 아니라면 이러한 방식으로 사용하는 것을 자제해 주세요. -->
+비슷하게 여러 배리언트를 Union으로 묶어 (예: `Option.Nothing | Option.Some`) 사용하는 것도 나쁜 디자인할 확률이 높습니다.
+
+내부적으로만 사용할 때는 정당화될 수 있으나, 이 경우에도 외부로 배리언트 타입을 노출하지는 않도록 하는 것이 좋습니다.
 
 ### 필드의 타입으로 Union을 사용하는 것
 
