@@ -17,7 +17,7 @@ class Message:
     Pause = Variant()
 
 
-def test_miscs():
+def test_misc():
     with pytest.raises(TypeError):
         Message()
 
@@ -96,6 +96,8 @@ def test_mutable_fieldenum():
 
 def test_relationship():
     # Unit variants are the instances. Use fieldless variant if you want issubclass work.
+    # Theoretically it's possible to make it to be both subclass and instance of original class,
+    # It breaks instance and class methods.
     assert isinstance(Message.Quit, Message)
 
     assert issubclass(Message.Move, Message)
@@ -148,22 +150,22 @@ def test_instancing_and_runtime_check():
 
 def test_eq_and_hash():
     assert Message.ChangeColor(1, ("hello",), [1, 2, 3]) == Message.ChangeColor(1, ("hello",), [1, 2, 3])
-    myset = {
+    my_set = {
         Message.ChangeColor(1, ("hello",), (1, 2, 3)),
         Message.Quit,
         Message.Move(x=234, y=(2, "hello")),
         Message.Pause(),
     }
-    assert Message.ChangeColor(1, ("hello",), (1, 2, 3)) in myset
-    assert Message.Quit in myset
-    assert Message.Move(x=234, y=(2, "hello")) in myset
-    assert Message.Pause() in myset
+    assert Message.ChangeColor(1, ("hello",), (1, 2, 3)) in my_set
+    assert Message.Quit in my_set
+    assert Message.Move(x=234, y=(2, "hello")) in my_set
+    assert Message.Pause() in my_set
 
-    myset.add(Message.ChangeColor(1, ("hello",), (1, 2, 3)))
-    myset.add(Message.Quit)
-    myset.add(Message.Move(x=234, y=(2, "hello")))
-    myset.add(Message.Pause())
-    assert len(myset) == 4
+    my_set.add(Message.ChangeColor(1, ("hello",), (1, 2, 3)))
+    my_set.add(Message.Quit)
+    my_set.add(Message.Move(x=234, y=(2, "hello")))
+    my_set.add(Message.Pause())
+    assert len(my_set) == 4
 
 
 @pytest.mark.parametrize(

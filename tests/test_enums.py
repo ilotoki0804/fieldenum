@@ -49,9 +49,9 @@ def test_option():
     assert Some(123).map(lambda _: None) is Option.Nothing
 
     # test map(func, as_is=True)
-    myoption = Some("123")
-    assert myoption.map(int, as_is=False).unwrap() == 123
-    assert myoption.map(int, as_is=True).unwrap() == 123
+    my_option = Some("123")
+    assert my_option.map(int, as_is=False).unwrap() == 123
+    assert my_option.map(int, as_is=True).unwrap() == 123
 
     # test wrap
     @Option.wrap
