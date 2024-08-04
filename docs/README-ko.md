@@ -14,7 +14,7 @@
 반대로 `dataclass`도 기본적으로 지원되나, 이는 enum처럼 선택지의 개념이 존재하지 않습니다.
 
 fieldenum은 러스트와 거의 비슷하면서도 파이썬의 문법과 잘 어울리는 필드가 있는 enum을 사용할 수 있도록 합니다.
-또한 이를 통해 Railroad Oriented Programming이나 `Option`과 같은 여러 함수형 프로그래밍의 개념을 활용할 수 있게 됩니다.
+또한 `fieldenum.enums` 모듈에서는 타입 힌트를 완전하게 제공하는 다양한 fieldenum들을 제공하며, 이를 통해 Railroad Oriented Programming이나 `Option`과 같은 여러 함수형 프로그래밍의 개념을 활용할 수 있습니다.
 
 ## Installation
 
@@ -97,7 +97,7 @@ class Message[T]:
 
 
 Message.Quit(123)  # OK
-Message.Stay[str]("hello")  # OK
+Message[str].Stay("hello")  # OK
 Message.Stay("hello")  # OK
 Message.Var3(123, "hello", {1: "world"})  # OK
 ```
@@ -131,6 +131,8 @@ Message.Var3(123, "hello", {"hello": "world"})  # 잘못됐지만 오류 없음 
 Message.Var3(123, "hello", 123)  # 잘못됐지만 오류 없음 (제너릭 alias)
 ```
 
+타입 확인 기능은 이름 있는 베리언트에서도 동일하게 적용됩니다.
+
 ### 이름 있는 배리언트
 
 이름 있는 배리언트는 순서가 없는 여러 키워드로 이루어진 배리언트입니다.
@@ -139,7 +141,7 @@ Message.Var3(123, "hello", 123)  # 잘못됐지만 오류 없음 (제너릭 alia
 from fieldenum import Variant, Unit, fieldenum, unreachable
 
 @fieldenum
-class Cord[T]:
+class Cord:
     D1 = Variant(x=float)
     D2 = Variant(x=float, y=float)
     D3 = Variant(x=float, y=float, z=float)
@@ -150,20 +152,22 @@ Cord.D1(x=123.456)
 Cord.D3(x=1343.5, y=25.2, z=465.312)
 ```
 
-이때 위치 인자를 사용해 초기화할 수는 없습니다.
+이때 위치 인자를 사용해 초기화하거나 위치 인자와 키워드 인자를 섞어서 사용할 수 있습니다.
 
 ```python
-Cord.D1(123.456)  # XXX: 불가능
+Cord.D1(123.456)  # 가능
+Cord.D2(123.456, y=789.0)  # 가능
+Cord.D3(1.2, 2.3, 3.4)  # 가능
 ```
 
-값은 attribute를 통해서도 접근할 수 있습니다.
+값은 속성을 통해서도 접근할 수 있습니다.
 
 ```python
 cord = Cord.D3(x=1343.5, y=25.2, z=465.312)
 
 assert cord.x == 1343.5
 assert cord.y == 25.2
-assert cord.x == 465.312
+assert cord.z == 465.312
 ```
 
 물론 match문을 사용하는 방식도 있으며, 일반적으로는 속성으로 접근하는 방식보다 더 선호됩니다.
@@ -183,7 +187,25 @@ match cord:
         print(f"x-y cord is ({x}, {y}) at {time}")
 ```
 
-런타임 체크의 규칙은 튜플형과 같습니다.
+또한 `.kw_only()`를 통해 인스턴스화하면 위치 인자 사용을 금지하고 키워드 인자만 사용하도록 설정할 수 있습니다.
+
+```python
+from fieldenum import Variant, Unit, fieldenum, unreachable
+
+@fieldenum
+class Cord:
+    D1 = Variant.kw_only(x=float)
+    D2 = Variant.kw_only(x=float, y=float)
+    D3 = Variant.kw_only(x=float, y=float, z=float)
+    D4 = Variant.kw_only(timestamp=float, x=float, y=float, z=float)
+
+Cord.D1(x=123.456)  # 가능
+Cord.D3(x=1343.5, y=25.2, z=465.312)  # 가능
+
+Cord.D1(123.456)  # XXX: 불가능
+Cord.D2(123.456, y=789.0)  # XXX: 불가능
+Cord.D3(1.2, 2.3, 3.4)  # XXX: 불가능
+```
 
 ### match문을 이용한 enum의 사용
 

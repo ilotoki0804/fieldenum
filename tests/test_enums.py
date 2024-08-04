@@ -45,6 +45,8 @@ def test_option():
     option = Option.Nothing
     assert option.map(int) is Option.Nothing
     assert Some(123).map(lambda _: None) is Option.Nothing
+    assert Some(123).map(lambda _: Option.Nothing) is Option.Nothing
+    assert Some(123).map(lambda _: Option.Some(567)) == Option.Some(567)
 
     # test map(func, as_is=True)
     my_option = Some("123")
@@ -82,6 +84,7 @@ def test_bound_result():
     ).unwrap() == BoundResult.Failed(error, Exception)
     error = ValueError(1234)
     assert BoundResult.Failed(error, Exception).map(str, as_is=True) == BoundResult.Failed(error, Exception)
+    assert BoundResult.Success(2342, Exception).map(lambda _: BoundResult.Failed(error, ValueError)) == BoundResult.Failed(error, Exception)
 
 
 @pytest.mark.parametrize(

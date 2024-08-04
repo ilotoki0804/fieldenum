@@ -11,10 +11,24 @@ from fieldenum._utils import NotAllowed
 @fieldenum
 class Message:
     Quit = Unit
-    Move = Variant(x=int, y=int).with_default(x=234569834)
+    Move = Variant.kw_only(x=int, y=int).with_default(x=234569834)
+    ArgMove = Variant(x=int, y=int).with_default(x=234569834)
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
     Pause = Variant()
+
+
+def test_none_kw_only():
+    assert Message.ArgMove(1, 2) == Message.ArgMove(1, y=2) == Message.ArgMove(x=1, y=2)
+    with pytest.raises(TypeError):
+        Message.ArgMove(1, 2, 3)
+    with pytest.raises(TypeError):
+        Message.ArgMove(1, 2, x=1)
+    with pytest.raises(TypeError):
+        Message.ArgMove(1, 2, x=1)
+    with pytest.raises(TypeError):
+        Message.ArgMove(1, x=1)
+    assert Message.ArgMove(234569834, 234) == Message.ArgMove(y=234)
 
 
 def test_misc():
@@ -47,7 +61,7 @@ def test_misc():
 
     with pytest.raises(TypeError):
         @fieldenum
-        class UnitDefault:
+        class FieldlessDefault:
             Move = Variant().with_default(a=123)
 
 
@@ -55,7 +69,7 @@ def test_mutable_fieldenum():
     @fieldenum(frozen=False)
     class Message:
         Quit = Unit
-        Move = Variant(x=int, y=int)
+        Move = Variant.kw_only(x=int, y=int)
         Write = Variant(str)
         ChangeColor = Variant(int, int, int)
         Pause = Variant()
@@ -117,7 +131,7 @@ def test_instancing_and_runtime_check():
     @fieldenum(runtime_check=True)
     class Message[T]:
         Quit = Unit
-        Move = Variant(x=int, y=int)
+        Move = Variant.kw_only(x=int, y=int)
         Write = Variant(str)
         ChangeColor = Variant(int | str, T, Any)
         Pause = Variant()

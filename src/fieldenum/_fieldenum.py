@@ -15,7 +15,7 @@ Base = typing.TypeVar("Base")
 
 
 class Variant:
-    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults")
+    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults", "_kw_only")
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -29,8 +29,15 @@ class Variant:
 
         return self
 
+    @classmethod
+    def kw_only(cls, **named_field):
+        self = cls(**named_field)
+        self._kw_only = True
+        return self
+
     def __init__(self, *tuple_field, **named_field) -> None:
         self.attached = False
+        self._kw_only = False
         self._defaults = {}
         if tuple_field and named_field:
             raise TypeError("Cannot mix tuple fields and named fields. This behavior may change in future.")
@@ -93,6 +100,8 @@ class Variant:
 
         self._base = cls
         tuple_field, named_field = self.field
+        if not self._kw_only:
+            named_field_keys = tuple(named_field)
         item = self
 
         self._actual: ConstructedVariant
@@ -199,7 +208,20 @@ class Variant:
                     values_repr = ', '.join(f'{name}={getattr(self, f"_{name}" if isinstance(name, int) else name)!r}' for name in self.__fields__)
                     return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
-                def __init__(self, **kwargs) -> None:
+                def __init__(self, *args, **kwargs) -> None:
+                    if args:
+                        if item._kw_only:
+                            raise TypeError(f"Variant '{type(self).__qualname__}' is keyword only.")
+
+                        if len(args) > len(named_field_keys):
+                            raise TypeError(f"{self.__name__} takes {len(named_field_keys)} positional argument(s) but {len(args)} were/was given")
+
+                        # a valid use case of zip without strict=True
+                        for arg, field_name in zip(args, named_field_keys):
+                            if field_name in kwargs:
+                                raise TypeError(f"Inconsistent input for field '{field_name}': received both positional and keyword values")
+                            kwargs[field_name] = arg
+
                     if self.__defaults__:
                         kwargs = self.__defaults__ | kwargs
 
@@ -213,6 +235,7 @@ class Variant:
                         if runtime_check:
                             getattr(self, "check_type", item.check_type)(field, value)
                         setattr(self, name, value)
+
             self._actual = NamedConstructedVariant
 
         else:
