@@ -7,7 +7,7 @@ WARNING: This submodule can only be imported on Python 3.12 or later.
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Any, Callable, Literal, Self, final, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
 
@@ -147,40 +147,40 @@ class Option[T]:
 class BoundResult[R, E: BaseException]:
     if TYPE_CHECKING:
         class Success[R, E](BoundResult[R, E]):
-            __match_args__ = ("_0", "_1")
-            __fields__ = ("_0", "_1")
+            __match_args__ = ("result", "bound")
+            __fields__ = ("result", "bound")
 
             @property
-            def _0(self) -> R:
+            def result(self) -> R:
                 ...
 
             @property
-            def _1(self) -> type[E]:
+            def bound(self) -> type[E]:
                 ...
 
-            def __init__(self, result: R, bound: type[E], /): ...
+            def __init__(self, result: R, bound: type[E]): ...
 
             def dump(self) -> tuple[R, E]: ...
 
         class Failed[R, E](BoundResult[R, E]):
-            __match_args__ = ("_0", "_1")
-            __fields__ = ("_0", "_1")
+            __match_args__ = ("error", "bound")
+            __fields__ = ("error", "bound")
 
             @property
-            def _0(self) -> R:
+            def error(self) -> R:
                 ...
 
             @property
-            def _1(self) -> type[E]:
+            def bound(self) -> type[E]:
                 ...
 
-            def __init__(self, result: E, bound: type[E], /): ...
+            def __init__(self, error: E, bound: type[E]): ...
 
             def dump(self) -> tuple[R, E]: ...
 
     else:
-        Success = Variant(R, type[E])
-        Failed = Variant(E, type[E])
+        Success = Variant(result=R, bound=type[E])
+        Failed = Variant(error=E, bound=type[E])
 
     @property
     def bound(self) -> type[E]:
