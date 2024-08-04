@@ -1,3 +1,5 @@
+"""fieldenum core implementation."""
+
 from __future__ import annotations
 
 import copyreg

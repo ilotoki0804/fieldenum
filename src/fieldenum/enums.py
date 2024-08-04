@@ -1,4 +1,8 @@
 # type: ignore
+"""Collection of useful fieldenums.
+
+WARNING: This submodule can only be imported on Python 3.12 or later.
+"""
 
 from __future__ import annotations
 
