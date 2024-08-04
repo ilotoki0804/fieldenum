@@ -174,6 +174,8 @@ class Variant:
                 __fields__ = item._slots_names
                 __defaults__ = item._defaults
                 __slots__ = ()
+                if not item._kw_only:
+                    __match_args__ = item._slots_names
 
                 if build_hash:
                     __slots__ += ("_hash",)
