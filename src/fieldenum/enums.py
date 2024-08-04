@@ -15,11 +15,34 @@ _MISSING = object()
 @final  # A redundant decorator for type checkers.
 @fieldenum
 class Option[T]:
-    Nothing = Unit
-    Some = Variant(T)
+    if TYPE_CHECKING:
+        Nothing = Unit
+        class Some[T](Option[T]):
+            __match_args__ = ("_0",)
+            __fields__ = ("_0",)
+
+            @property
+            def _0(self) -> T:
+                ...
+
+            def __init__(self, value: T, /): ...
+
+            def dump(self) -> tuple[T]: ...
+
+    else:
+        Nothing = Unit
+        Some = Variant(T)
+
+    @overload
+    @classmethod
+    def new(cls, value: T | None, as_is: Literal[True]) -> Option[T]: ...
+
+    @overload
+    @classmethod
+    def new(cls, value: T | None | Option[T], as_is: Literal[False] = ...) -> Option[T]: ...
 
     @classmethod
-    def new(cls, value: T | None | Self, as_is=False) -> Self:
+    def new(cls, value, as_is=False):
         if not as_is and isinstance(value, Option):
             return value
 
@@ -36,7 +59,7 @@ class Option[T]:
     @overload
     def unwrap(self, default: T) -> T: ...
 
-    def unwrap(self, default: T = _MISSING) -> T:
+    def unwrap(self, default=_MISSING):
         match self:
             case Option.Nothing if default is _MISSING:
                 raise ValueError("Unwrap failed.")
@@ -50,13 +73,13 @@ class Option[T]:
             case other:
                 unreachable(other)
 
-    def expect(self, value_or_error, /) -> T:
+    def expect(self, message_or_exception: str | BaseException, /) -> T:
         match self:
-            case Option.Nothing if isinstance(value_or_error, BaseException):
-                raise value_or_error
+            case Option.Nothing if isinstance(message_or_exception, BaseException):
+                raise message_or_exception
 
             case Option.Nothing:
-                raise ValueError(value_or_error)
+                raise ValueError(message_or_exception)
 
             case Option.Some(value):
                 return value
@@ -118,8 +141,42 @@ class Option[T]:
 @final  # A redundant decorator for type checkers.
 @fieldenum
 class BoundResult[R, E: BaseException]:
-    Success = Variant(R, type[E])
-    Failed = Variant(E, type[E])
+    if TYPE_CHECKING:
+        class Success[R, E](BoundResult[R, E]):
+            __match_args__ = ("_0", "_1")
+            __fields__ = ("_0", "_1")
+
+            @property
+            def _0(self) -> R:
+                ...
+
+            @property
+            def _1(self) -> type[E]:
+                ...
+
+            def __init__(self, result: R, bound: type[E], /): ...
+
+            def dump(self) -> tuple[R, E]: ...
+
+        class Failed[R, E](BoundResult[R, E]):
+            __match_args__ = ("_0", "_1")
+            __fields__ = ("_0", "_1")
+
+            @property
+            def _0(self) -> R:
+                ...
+
+            @property
+            def _1(self) -> type[E]:
+                ...
+
+            def __init__(self, result: E, bound: type[E], /): ...
+
+            def dump(self) -> tuple[R, E]: ...
+
+    else:
+        Success = Variant(R, type[E])
+        Failed = Variant(E, type[E])
 
     @property
     def bound(self) -> type[E]:
@@ -139,7 +196,7 @@ class BoundResult[R, E: BaseException]:
     @overload
     def unwrap(self, default: R) -> R: ...
 
-    def unwrap(self, default: R = _MISSING) -> R:
+    def unwrap(self, default=_MISSING):
         match self:
             case BoundResult.Success(ok, _):
                 return ok
@@ -186,9 +243,17 @@ class BoundResult[R, E: BaseException]:
             case other:
                 unreachable(other)
 
+    @overload
     def map[NewReturn](
-        self, func: Callable[[R], BoundResult[NewReturn, Any] | NewReturn], /, *, as_is: bool = False
-    ) -> BoundResult[NewReturn, E]:
+        self, func: Callable[[R], NewReturn], /, *, as_is: Literal[True]
+    ) -> BoundResult[NewReturn, E]: ...
+
+    @overload
+    def map[NewReturn](
+        self, func: Callable[[R], BoundResult[NewReturn, Any] | NewReturn], /, *, as_is: Literal[False] = ...
+    ) -> BoundResult[NewReturn, E]: ...
+
+    def map(self, func, /, *, as_is=False):
         match self:
             case BoundResult.Success(ok, bound):
                 try:
@@ -264,39 +329,85 @@ class BoundResult[R, E: BaseException]:
 @fieldenum
 class Message:
     """Test fieldenum to play with."""
-    Quit = Unit
-    Move = Variant(x=int, y=int)
-    Write = Variant(str)
-    ChangeColor = Variant(int, int, int)
-    Pause = Variant()
+    if TYPE_CHECKING:
+        Quit = Unit
+
+        class Move(Message):
+            __match_args__ = ("x", "y")
+            __fields__ = ("x", "y")
+
+            @property
+            def x(self) -> int:
+                ...
+
+            @property
+            def y(self) -> int:
+                ...
+
+            def __init__(self, *, x: int, y: int): ...
+
+            def dump(self) -> dict[str, int]: ...
+
+        class Write(Message):
+            __match_args__ = ("_0",)
+            __fields__ = ("_0",)
+
+            @property
+            def _0(self) -> str:
+                ...
+
+            def __init__(self, message: str, /): ...
+
+            def dump(self) -> tuple[int]: ...
+
+        class ChangeColor(Message):
+            __match_args__ = ("_0", "_1", "_2")
+            __fields__ = ("_0", "_1", "_2")
+
+            @property
+            def _0(self) -> int:
+                ...
+
+            @property
+            def _1(self) -> int:
+                ...
+
+            @property
+            def _2(self) -> int:
+                ...
+
+            def __init__(self, red: int, green: int, blue: int, /): ...
+
+            def dump(self) -> tuple[int, int, int]: ...
+
+        class Pause(Message):
+            __match_args__ = ()
+            __fields__ = ()
+
+            @property
+            def _0(self) -> int:
+                ...
+
+            @property
+            def _1(self) -> int:
+                ...
+
+            @property
+            def _2(self) -> int:
+                ...
+
+            def __init__(self): ...
+
+            def dump(self) -> tuple[()]: ...
+
+    else:
+        Quit = Unit
+        Move = Variant(x=int, y=int)
+        Write = Variant(str)
+        ChangeColor = Variant(int, int, int)
+        Pause = Variant()
 
 
-if TYPE_CHECKING:
-    class Some[T](Option[T]):
-        __match_args__ = ("_0",)
-        __fields__ = ("_0")
-
-        def __init__(self, value: T, /): ...
-
-        def dump(self) -> tuple[T]: ...
-
-    class Success[R, E](BoundResult[R, E]):
-        __match_args__ = ("_0", "_1")
-        __fields__ = ("_0", "_1")
-
-        def __init__(self, result: R, bound: type[E], /): ...
-
-        def dump(self) -> tuple[R, E]: ...
-
-    class Failed[R, E](BoundResult[R, E]):
-        __match_args__ = ("_0", "_1")
-        __fields__ = ("_0", "_1")
-
-        def __init__(self, result: E, bound: type[E], /): ...
-
-        def dump(self) -> tuple[R, E]: ...
-
-else:
-    Some = Option.Some
-    Success = BoundResult.Success
-    Failed = BoundResult.Failed
+Some = Option.Some
+Success = BoundResult.Success
+Failed = BoundResult.Failed

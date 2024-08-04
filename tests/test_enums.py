@@ -1,5 +1,3 @@
-# type: ignore
-
 import pytest
 from fieldenum import *
 from fieldenum.enums import *
@@ -131,9 +129,9 @@ def test_bound_result_wrap(second_param):
         exception_bound_func(None, "hello").rebound(ValueError).map(lambda s: 1 / 0)
 
     with pytest.raises(TypeError):
-        BoundResult.wrap(lambda: None, Exception, "unexpected_param")
+        BoundResult.wrap(lambda: None, Exception, "unexpected_param")  # type: ignore
     with pytest.raises(TypeError):
-        BoundResult.wrap(lambda: None, Exception, "unexpected_param", "unexpected_param2")
+        BoundResult.wrap(lambda: None, Exception, "unexpected_param", "unexpected_param2")  # type: ignore
 
     assert valueerror_bound_func(None, 1234).bound is ValueError
     assert valueerror_bound_func(ValueError(123), 1234).bound is ValueError
