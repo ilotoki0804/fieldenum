@@ -15,15 +15,9 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.12
-    - name: Generate venv and activate
-      run: |
-        python -m venv .venv
-        chmod +x .venv/bin/activate
-        source .venv/bin/activate
     - name: Install dependencies
       run: |
-        python -m pip install poetry pytest
-        poetry install
+        python -m pip install pytest pytest-cov
     - name: Test with pytest
       run: |
         python -m pytest --cov --cov-report xml
