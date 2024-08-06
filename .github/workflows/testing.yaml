@@ -21,9 +21,9 @@ jobs:
         python -m pip install -e .
     - name: Test with pytest
       run: |
-        python -m pytest --cov --cov-report xml
+        python -m pytest --cov --cov-report lcov
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: coverage.xml
+        path-to-lcov: coverage.lcov
