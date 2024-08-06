@@ -7,9 +7,10 @@ WARNING: This submodule can only be imported on Python 3.12 or later.
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Any, Callable, Literal, final, overload
+from typing import TYPE_CHECKING, Any, Callable, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
+from .exceptions import IncompatibleBoundError
 
 __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 
@@ -37,19 +38,47 @@ class Option[T]:
         Nothing = Unit
         Some = Variant(T)
 
-    @overload
-    @classmethod
-    def new(cls, value: T | None, as_is: Literal[True]) -> Option[T]: ...
+    def __bool__(self):
+        return self is not Option.Nothing
 
     @overload
     @classmethod
-    def new(cls, value: T | None | Option[T], as_is: Literal[False] = ...) -> Option[T]: ...
+    def new(cls, value: None, /) -> Option[T]: ...
+
+    @overload
+    @classmethod
+    def new[U](cls, value: Option[U] | U | None, /) -> Option[U]: ...
+
+    @overload
+    @classmethod
+    def new(cls, value: Option[T] | T | None, /) -> Option[T]: ...
 
     @classmethod
-    def new(cls, value, as_is=False):
-        if not as_is and isinstance(value, Option):
+    def new(cls, value, /):
+        if isinstance(value, Option):
             return value
 
+        match value:
+            case None:
+                return Option.Nothing
+
+            case value:
+                return Option.Some(value)
+
+    @overload
+    @classmethod
+    def new_as_is(cls, value: None, /) -> Option[T]: ...
+
+    @overload
+    @classmethod
+    def new_as_is[U](cls, value: U | None, /) -> Option[U]: ...
+
+    @overload
+    @classmethod
+    def new_as_is(cls, value: T | None, /) -> Option[T]: ...
+
+    @classmethod
+    def new_as_is(cls, value: T | None, /) -> Option[T]:
         match value:
             case None:
                 return Option.Nothing
@@ -62,6 +91,9 @@ class Option[T]:
 
     @overload
     def unwrap(self, default: T) -> T: ...
+
+    @overload
+    def unwrap[U](self, default: U) -> T | U: ...
 
     def unwrap(self, default=_MISSING):
         match self:
@@ -91,54 +123,40 @@ class Option[T]:
             case other:
                 unreachable(other)
 
-    @overload
-    def map[U](
-        self,
-        func: Callable[[T], Option[U] | U | None],
-        /,
-        *,
-        as_is: Literal[False] = ...,
-    ) -> Option[U]: ...
-
-    @overload
-    def map[U](
-        self,
-        func: Callable[[T], U | None],
-        /,
-        *,
-        as_is: Literal[True] = ...,
-    ) -> Option[U]: ...
-
-    def map(self, func, /, *, as_is=False):
-        if not self:
-            return self
-
-        result = func(self.unwrap())
-
-        match result:
-            case None:
-                return Option.Nothing
-
-            case result if as_is:
-                return Option.Some(result)
-
+    def map[U](self, func: Callable[[T], Option[U] | None | U], /) -> Option[U]:
+        match self:
             case Option.Nothing:
                 return Option.Nothing
 
-            case Option.Some(_) as result:
-                return result
+            case Option.Some(value):
+                return Option.new(func(value))
 
-            case result:
-                return Option.Some(result)
+            case other:
+                unreachable(other)
 
-    def __bool__(self):
-        return self is not Option.Nothing
+    def map_as_is[U](self, func: Callable[[T], U | None], /) -> Option[U]:
+        match self:
+            case Option.Nothing:
+                return Option.Nothing
+
+            case Option.Some(value):
+                return Option.new_as_is(func(value))
+
+            case other:
+                unreachable(other)
 
     @classmethod
-    def wrap[**Params, Return](cls, func: Callable[Params, Return | None], /) -> Callable[Params, Option[Return]]:
+    def wrap[**Params, Return](cls, func: Callable[Params, Option[Return] | Return | None], /) -> Callable[Params, Option[Return]]:
         @functools.wraps(func)
-        def decorator(*args: Params.args, **kwargs: Params.kwargs) -> Option[Return]:
+        def decorator(*args: Params.args, **kwargs: Params.kwargs):
             return Option.new(func(*args, **kwargs))
+        return decorator
+
+    @classmethod
+    def wrap_as_is[**Params, Return](cls, func: Callable[Params, Return | None], /) -> Callable[Params, Option[Return]]:
+        @functools.wraps(func)
+        def decorator(*args: Params.args, **kwargs: Params.kwargs):
+            return Option.new_as_is(func(*args, **kwargs))
         return decorator
 
 
@@ -147,18 +165,18 @@ class Option[T]:
 class BoundResult[R, E: BaseException]:
     if TYPE_CHECKING:
         class Success[R, E](BoundResult[R, E]):
-            __match_args__ = ("result", "bound")
-            __fields__ = ("result", "bound")
+            __match_args__ = ("value", "bound")
+            __fields__ = ("value", "bound")
 
             @property
-            def result(self) -> R:
+            def value(self) -> R:
                 ...
 
             @property
             def bound(self) -> type[E]:
                 ...
 
-            def __init__(self, result: R, bound: type[E]): ...
+            def __init__(self, value: R, bound: type[E]): ...
 
             def dump(self) -> tuple[R, E]: ...
 
@@ -167,7 +185,7 @@ class BoundResult[R, E: BaseException]:
             __fields__ = ("error", "bound")
 
             @property
-            def error(self) -> R:
+            def error(self) -> E:
                 ...
 
             @property
@@ -178,21 +196,16 @@ class BoundResult[R, E: BaseException]:
 
             def dump(self) -> tuple[R, E]: ...
 
+        @property
+        def bound(self) -> type[E]:
+            ...
+
     else:
-        Success = Variant(result=R, bound=type[E])
+        Success = Variant(value=R, bound=type[E])
         Failed = Variant(error=E, bound=type[E])
 
-    @property
-    def bound(self) -> type[E]:
-        match self:
-            case BoundResult.Success(_, bound):
-                return bound
-
-            case BoundResult.Failed(_, bound):
-                return bound
-
-            case other:
-                unreachable(other)
+    def __bool__(self) -> bool:
+        return isinstance(self, BoundResult.Success)
 
     @overload
     def unwrap(self) -> R: ...
@@ -200,15 +213,18 @@ class BoundResult[R, E: BaseException]:
     @overload
     def unwrap(self, default: R) -> R: ...
 
+    @overload
+    def unwrap[T](self, default: T) -> R | T: ...
+
     def unwrap(self, default=_MISSING):
         match self:
-            case BoundResult.Success(ok, _):
-                return ok
+            case BoundResult.Success(value, _):
+                return value
 
-            case BoundResult.Failed(err, _) if default is _MISSING:
-                raise err
+            case BoundResult.Failed(error, _) if default is _MISSING:
+                raise error
 
-            case BoundResult.Failed(err, _):
+            case BoundResult.Failed(error, _):
                 return default
 
             case other:
@@ -216,8 +232,8 @@ class BoundResult[R, E: BaseException]:
 
     def as_option(self) -> Option[R]:
         match self:
-            case BoundResult.Success(ok, _):
-                return Option.Some(ok)
+            case BoundResult.Success(value, _):
+                return Option.Some(value)
 
             case BoundResult.Failed(_, _):
                 return Option.Nothing
@@ -227,49 +243,30 @@ class BoundResult[R, E: BaseException]:
 
     def rebound[NewBound: BaseException](self, bound: type[NewBound], /) -> BoundResult[R, NewBound]:
         match self:
-            case BoundResult.Success(ok, _):
-                return BoundResult.Success(ok, bound)
+            case BoundResult.Success(value, _):
+                return BoundResult.Success(value, bound)
 
-            case BoundResult.Failed(err, _):
-                return BoundResult.Failed(err, bound)
-
-            case other:
-                unreachable(other)
-
-    def __bool__(self) -> bool:
-        match self:
-            case BoundResult.Success(_, _):
-                return True
-
-            case BoundResult.Failed(_, _):
-                return False
+            case BoundResult.Failed(error, _):
+                if not isinstance(error, bound):
+                    raise IncompatibleBoundError(f"New bound {bound.__qualname__!r} is incompatible with existing error: {type(error).__qualname__}.")
+                return BoundResult.Failed(error, bound)
 
             case other:
                 unreachable(other)
 
-    @overload
-    def map[NewReturn](
-        self, func: Callable[[R], NewReturn], /, *, as_is: Literal[True]
-    ) -> BoundResult[NewReturn, E]: ...
-
-    @overload
-    def map[NewReturn](
-        self, func: Callable[[R], BoundResult[NewReturn, Any] | NewReturn], /, *, as_is: Literal[False] = ...
-    ) -> BoundResult[NewReturn, E]: ...
-
-    def map(self, func, /, *, as_is=False):
+    def map[NewReturn](self, func: Callable[[R], BoundResult[NewReturn, Any] | NewReturn], /) -> BoundResult[NewReturn, E]:
         match self:
             case BoundResult.Success(ok, bound):
                 try:
-                    if as_is:
-                        return BoundResult.Success(func(ok), bound)
-
                     result = func(ok)
                 except bound as exc:
                     return BoundResult.Failed(exc, bound)
 
-            case BoundResult.Failed(_, _) as failed:
-                return failed
+            case BoundResult.Failed(error, bound) as failed:
+                if TYPE_CHECKING:
+                    return BoundResult.Failed[NewReturn, E](error, bound)
+                else:
+                    return failed
 
             case other:
                 unreachable(other)
@@ -278,28 +275,111 @@ class BoundResult[R, E: BaseException]:
             case BoundResult.Success(ok, _):
                 return BoundResult.Success(ok, bound)
 
-            case BoundResult.Failed(err, _):
-                return BoundResult.Failed(err, bound)
+            case BoundResult.Failed(error, _):
+                if not isinstance(error, bound):
+                    raise IncompatibleBoundError(f"Bound {bound.__qualname__!r} is not compatible with existing error: {type(error).__qualname__}.")
+                return BoundResult.Failed(error, bound)
 
             case other:
                 return BoundResult.Success(other, bound)
+
+    def map_as_is[NewReturn](self, func: Callable[[R], NewReturn], /) -> BoundResult[NewReturn, E]:
+        match self:
+            case BoundResult.Success(ok, bound):
+                try:
+                    return BoundResult.Success(func(ok), bound)
+
+                except bound as error:
+                    return BoundResult.Failed(error, bound)
+
+            case BoundResult.Failed(_, _) as failed:
+                return failed
+
+            case other:
+                unreachable(other)
 
     @overload
     @classmethod
     def wrap[**Params, Return, Bound: BaseException](
         cls, bound: type[Bound], /
-    ) -> Callable[[Callable[Params, Return]], Callable[Params, BoundResult[Return, Bound]]]: ...
+    ) -> Callable[[Callable[Params, BoundResult[Return, Any] | Return]], Callable[Params, BoundResult[Return, Bound]]]: ...
 
     @overload
     @classmethod
     def wrap[**Params, Return, Bound: BaseException](
-        cls, func: Callable[Params, Return], bound: type[Bound], /
+        cls, func: Callable[Params, BoundResult[Return, Any] | Return], bound: type[Bound], /
     ) -> Callable[Params, BoundResult[Return, Bound]]: ...
 
     @classmethod
     def wrap(cls, *args):
         match args:
-            case [bound]:
+            case (bound,):
+                def decorator(func):
+                    @functools.wraps(func)
+                    def inner(*args, **kwargs):
+                        try:
+                            result = func(*args, **kwargs)
+                        except bound as exc:
+                            return BoundResult.Failed(exc, bound)
+
+                        match result:
+                            case BoundResult.Failed(error, _):
+                                # basically same as rebound operation
+                                return BoundResult.Failed(error, bound)
+
+                            case BoundResult.Success(value, _):
+                                return BoundResult.Success(value, bound)
+
+                            case value:
+                                return BoundResult.Success(value, bound)
+
+                    return inner
+
+                return decorator
+
+            case func, bound:
+                @functools.wraps(func)
+                def inner(*args, **kwargs):
+                    try:
+                        result = BoundResult.Success(func(*args, **kwargs), bound)
+                    except bound as exc:
+                        return BoundResult.Failed(exc, bound)
+
+                    match result:
+                        case BoundResult.Failed(error, _):
+                            # basically same as rebound operation
+                            return BoundResult.Failed(error, bound)
+
+                        case BoundResult.Success(value, _):
+                            return BoundResult.Success(value, bound)
+
+                        case value:
+                            return BoundResult.Success(value, bound)
+
+                return inner
+
+            case _, _, *params:
+                raise TypeError(f"Received unexpected parameter(s): {params}")
+
+            case other:
+                unreachable(other)
+
+    @overload
+    @classmethod
+    def wrap_as_is[**Params, Return, Bound: BaseException](
+        cls, bound: type[Bound], /
+    ) -> Callable[[Callable[Params, Return]], Callable[Params, BoundResult[Return, Bound]]]: ...
+
+    @overload
+    @classmethod
+    def wrap_as_is[**Params, Return, Bound: BaseException](
+        cls, func: Callable[Params, Return], bound: type[Bound], /
+    ) -> Callable[Params, BoundResult[Return, Bound]]: ...
+
+    @classmethod
+    def wrap_as_is(cls, *args):
+        match args:
+            case (bound,):
                 def decorator(func):
                     @functools.wraps(func)
                     def inner(*args, **kwargs):
