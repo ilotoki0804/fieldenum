@@ -282,35 +282,6 @@ class Variant:
         copyreg.pickle(self._actual, self._actual._pickle)
         self.attached = True
 
-    def __repr__(self) -> str:
-        try:
-            name = self.name
-        except AttributeError:
-            return super().__repr__()
-
-        try:
-            classname = self._base
-        except AttributeError:
-            return super().__repr__()
-
-        try:
-            field = self.field
-        except AttributeError:
-            return super().__repr__()
-        else:
-            tuple_field, named_field = field
-
-            if tuple_field:
-                # body = ", ".join(repr(getattr(self, name)) for name in self.slots_value)
-                body = repr(tuple_field)
-            elif named_field:
-                body = ", ".join(f"{name}={getattr(self, name)}" for name in self._slots_names)
-                body = f"({body})"
-            else:
-                body = "()"
-
-        return f"{classname.__name__}.{name}{body}"
-
     def __call__(self, *args, **kwargs):
         return self._actual(*args, **kwargs)
 
