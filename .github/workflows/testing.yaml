@@ -22,11 +22,11 @@ jobs:
         source .venv/bin/activate
     - name: Install dependencies
       run: |
-        pip install poetry
+        python -m pip install poetry
         poetry install
     - name: Test with pytest
       run: |
-        pytest --cov --cov-report xml
+        python -m pytest --cov --cov-report xml
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
