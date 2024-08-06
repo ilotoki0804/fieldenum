@@ -1,5 +1,12 @@
 # fieldenum
 
+
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/fieldenum)](https://pypi.org/project/fieldenum/)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Filotoki0804%2Ffieldenum&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://github.com/ilotoki0804/fieldenum)
+[![Coverage Status](https://coveralls.io/repos/github/ilotoki0804/fieldenum/badge.svg?branch=master)](https://coveralls.io/github/ilotoki0804/fieldenum?branch=master)
+[![Sponsoring](https://img.shields.io/badge/Sponsoring-Toss-blue?logo=GitHub%20Sponsors&logoColor=white)](https://toss.me/ilotoki)
+
+
 파이썬에서의 러스트 스타일의 필드형 enum
 
 **[English Docs](/README.md)**
