@@ -84,7 +84,9 @@ def test_bound_result():
     ).unwrap() == BoundResult.Failed(error, Exception)
     error = ValueError(1234)
     assert BoundResult.Failed(error, Exception).map_as_is(str) == BoundResult.Failed(error, Exception)
-    assert BoundResult.Success(2342, Exception).map(lambda _: BoundResult.Failed(error, ValueError)) == BoundResult.Failed(error, Exception)
+    assert BoundResult.Success(2342, Exception).map(
+        lambda _: BoundResult.Failed(error, ValueError)
+    ) == BoundResult.Failed(error, Exception)
 
 
 @pytest.mark.parametrize(
@@ -142,6 +144,6 @@ def test_bound_result_wrap(second_param):
 
     assert Success("hello", ValueError).map(lambda x: exception_bound_func(None, x)) == Success("hello", ValueError)
     error = ValueError("hello")
-    assert BoundResult.Failed(error, ValueError).map(
-        lambda x: exception_bound_func(None, x)
-    ) == BoundResult.Failed(error, ValueError)
+    assert BoundResult.Failed(error, ValueError).map(lambda x: exception_bound_func(None, x)) == BoundResult.Failed(
+        error, ValueError
+    )

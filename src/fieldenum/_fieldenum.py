@@ -20,9 +20,7 @@ class Variant:
     def __set_name__(self, owner, name):
         self.name = name
 
-    def __get__(
-        self, obj, objtype=None
-    ) -> typing.Self:  # Type as Self minimizes type checker errors, but it makes match statement very noisy.
+    def __get__(self, obj, objtype=None) -> typing.Self:
         if self.attached:
             # This is needed in order to make match statements work.
             return self._actual  # type: ignore
@@ -35,12 +33,24 @@ class Variant:
         self._kw_only = True
         return self
 
+    # fieldless variant
+    @typing.overload
+    def __init__(self) -> None: ...
+
+    # tuple variant
+    @typing.overload
+    def __init__(self, *tuple_field) -> None: ...
+
+    # named variant
+    @typing.overload
+    def __init__(self, **named_field) -> None: ...
+
     def __init__(self, *tuple_field, **named_field) -> None:
         self.attached = False
         self._kw_only = False
         self._defaults = {}
         if tuple_field and named_field:
-            raise TypeError("Cannot mix tuple fields and named fields. This behavior may change in future.")
+            raise TypeError("Cannot mix tuple fields and named fields. Use named fields.")
         self.field = (tuple_field, named_field)
         if named_field:
             self._slots_names = tuple(named_field)
@@ -48,8 +58,7 @@ class Variant:
             self._slots_names = tuple(f"_{i}" for i in range(len(tuple_field)))
 
     if typing.TYPE_CHECKING:
-        def dump(self):
-            ...
+        def dump(self): ...
 
     def check_type(self, field, value, /):
         """Should raise error when type is mismatched."""
@@ -341,7 +350,6 @@ class UnitDescriptor:
         if self.name is None:
             raise TypeError("`self.name` is not set.")
 
-        # fmt: off
         class UnitConstructedVariant(cls, metaclass=ParamlessSingletonMeta):
             __name__ = self.name
             __slots__ = ()
@@ -366,7 +374,6 @@ class UnitDescriptor:
 
             def __repr__(self):
                 return f"{cls.__name__}.{self.__name__}"
-        # fmt: off
 
         copyreg.pickle(UnitConstructedVariant, UnitConstructedVariant._pickle)
 
@@ -402,9 +409,11 @@ def fieldenum(
                 is_final = True
                 break
     if is_final:
-        raise TypeError("One of the base classes of fieldenum class is marked as final, "
-                        "which means it does not want to be subclassed and it may be fieldenum class, "
-                        "which should not be subclassed.")
+        raise TypeError(
+            "One of the base classes of fieldenum class is marked as final, "
+            "which means it does not want to be subclassed and it may be fieldenum class, "
+            "which should not be subclassed."
+        )
 
     class_attributes = vars(cls)
     has_own_hash = "__hash__" in class_attributes

@@ -98,7 +98,6 @@ def test_tuple_variant():
         Stay = Variant(T)  # 제너릭도 사용 가능합니다.
         Var3 = Variant(int, str, dict[int, str])  # 여러 값을 이어서 적으면 각각이 파라미터가 됩니다.
 
-
     Message.Quit(123)  # OK
     Message[str].Stay("hello")  # OK
     Message.Stay("hello")  # OK

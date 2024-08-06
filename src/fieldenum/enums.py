@@ -27,8 +27,7 @@ class Option[T]:
             __fields__ = ("_0",)
 
             @property
-            def _0(self) -> T:
-                ...
+            def _0(self) -> T: ...
 
             def __init__(self, value: T, /): ...
 
@@ -169,12 +168,10 @@ class BoundResult[R, E: BaseException]:
             __fields__ = ("value", "bound")
 
             @property
-            def value(self) -> R:
-                ...
+            def value(self) -> R: ...
 
             @property
-            def bound(self) -> type[E]:
-                ...
+            def bound(self) -> type[E]: ...
 
             def __init__(self, value: R, bound: type[E]): ...
 
@@ -185,20 +182,17 @@ class BoundResult[R, E: BaseException]:
             __fields__ = ("error", "bound")
 
             @property
-            def error(self) -> E:
-                ...
+            def error(self) -> E: ...
 
             @property
-            def bound(self) -> type[E]:
-                ...
+            def bound(self) -> type[E]: ...
 
             def __init__(self, error: E, bound: type[E]): ...
 
             def dump(self) -> tuple[R, E]: ...
 
         @property
-        def bound(self) -> type[E]:
-            ...
+        def bound(self) -> type[E]: ...
 
     else:
         Success = Variant(value=R, bound=type[E])
@@ -248,7 +242,9 @@ class BoundResult[R, E: BaseException]:
 
             case BoundResult.Failed(error, _):
                 if not isinstance(error, bound):
-                    raise IncompatibleBoundError(f"New bound {bound.__qualname__!r} is incompatible with existing error: {type(error).__qualname__}.")
+                    raise IncompatibleBoundError(
+                        f"New bound {bound.__qualname__!r} is incompatible with existing error: {type(error).__qualname__}."
+                    )
                 return BoundResult.Failed(error, bound)
 
             case other:
@@ -259,8 +255,11 @@ class BoundResult[R, E: BaseException]:
             case BoundResult.Success(ok, bound):
                 try:
                     result = func(ok)
-                except bound as exc:
-                    return BoundResult.Failed(exc, bound)
+                except BaseException as error:
+                    if isinstance(error, bound):
+                        return BoundResult.Failed(error, bound)
+                    else:
+                        raise
 
             case BoundResult.Failed(error, bound) as failed:
                 if TYPE_CHECKING:
@@ -277,7 +276,9 @@ class BoundResult[R, E: BaseException]:
 
             case BoundResult.Failed(error, _):
                 if not isinstance(error, bound):
-                    raise IncompatibleBoundError(f"Bound {bound.__qualname__!r} is not compatible with existing error: {type(error).__qualname__}.")
+                    raise IncompatibleBoundError(
+                        f"Bound {bound.__qualname__!r} is not compatible with existing error: {type(error).__qualname__}."
+                    )
                 return BoundResult.Failed(error, bound)
 
             case other:
@@ -289,8 +290,11 @@ class BoundResult[R, E: BaseException]:
                 try:
                     return BoundResult.Success(func(ok), bound)
 
-                except bound as error:
-                    return BoundResult.Failed(error, bound)
+                except BaseException as error:
+                    if isinstance(error, bound):
+                        return BoundResult.Failed(error, bound)
+                    else:
+                        raise
 
             case BoundResult.Failed(_, _) as failed:
                 return failed
@@ -319,8 +323,11 @@ class BoundResult[R, E: BaseException]:
                     def inner(*args, **kwargs):
                         try:
                             result = func(*args, **kwargs)
-                        except bound as exc:
-                            return BoundResult.Failed(exc, bound)
+                        except BaseException as error:
+                            if isinstance(error, bound):
+                                return BoundResult.Failed(error, bound)
+                            else:
+                                raise
 
                         match result:
                             case BoundResult.Failed(error, _):
@@ -342,8 +349,11 @@ class BoundResult[R, E: BaseException]:
                 def inner(*args, **kwargs):
                     try:
                         result = BoundResult.Success(func(*args, **kwargs), bound)
-                    except bound as exc:
-                        return BoundResult.Failed(exc, bound)
+                    except BaseException as error:
+                        if isinstance(error, bound):
+                            return BoundResult.Failed(error, bound)
+                        else:
+                            raise
 
                     match result:
                         case BoundResult.Failed(error, _):
@@ -385,8 +395,11 @@ class BoundResult[R, E: BaseException]:
                     def inner(*args, **kwargs):
                         try:
                             return BoundResult.Success(func(*args, **kwargs), bound)
-                        except bound as exc:
-                            return BoundResult.Failed(exc, bound)
+                        except BaseException as error:
+                            if isinstance(error, bound):
+                                return BoundResult.Failed(error, bound)
+                            else:
+                                raise
 
                     return inner
 
@@ -397,8 +410,11 @@ class BoundResult[R, E: BaseException]:
                 def inner(*args, **kwargs):
                     try:
                         return BoundResult.Success(func(*args, **kwargs), bound)
-                    except bound as exc:
-                        return BoundResult.Failed(exc, bound)
+                    except BaseException as error:
+                        if isinstance(error, bound):
+                            return BoundResult.Failed(error, bound)
+                        else:
+                            raise
 
                 return inner
 
@@ -421,12 +437,10 @@ class Message:
             __fields__ = ("x", "y")
 
             @property
-            def x(self) -> int:
-                ...
+            def x(self) -> int: ...
 
             @property
-            def y(self) -> int:
-                ...
+            def y(self) -> int: ...
 
             def __init__(self, x: int, y: int): ...
 
@@ -437,8 +451,7 @@ class Message:
             __fields__ = ("_0",)
 
             @property
-            def _0(self) -> str:
-                ...
+            def _0(self) -> str: ...
 
             def __init__(self, message: str, /): ...
 
@@ -449,16 +462,13 @@ class Message:
             __fields__ = ("_0", "_1", "_2")
 
             @property
-            def _0(self) -> int:
-                ...
+            def _0(self) -> int: ...
 
             @property
-            def _1(self) -> int:
-                ...
+            def _1(self) -> int: ...
 
             @property
-            def _2(self) -> int:
-                ...
+            def _2(self) -> int: ...
 
             def __init__(self, red: int, green: int, blue: int, /): ...
 
@@ -469,16 +479,13 @@ class Message:
             __fields__ = ()
 
             @property
-            def _0(self) -> int:
-                ...
+            def _0(self) -> int: ...
 
             @property
-            def _1(self) -> int:
-                ...
+            def _1(self) -> int: ...
 
             @property
-            def _2(self) -> int:
-                ...
+            def _2(self) -> int: ...
 
             def __init__(self): ...
 
