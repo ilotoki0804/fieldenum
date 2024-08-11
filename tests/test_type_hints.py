@@ -1,3 +1,5 @@
+import pytest
+from fieldenum import fieldenum, Variant, Unit
 from fieldenum.enums import Option, BoundResult, Message, Some, Success, Failed
 from typing import TYPE_CHECKING, assert_type
 
@@ -89,3 +91,14 @@ def test_option():
         return Option.new(a)
 
     assert_type(wrapped_as_is(1), Option[Option[int]])
+
+
+def test_fieldenum():
+    with pytest.raises(TypeError):
+        @fieldenum
+        class FieldEnum:
+            variant0 = Variant()
+            variant1 = Variant(int)
+            variant3 = Variant(named=str)
+            # should raise type checker error
+            variant3 = Variant(int, named=str)

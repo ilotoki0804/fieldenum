@@ -11,8 +11,8 @@ from fieldenum._utils import NotAllowed
 @fieldenum
 class Message:
     Quit = Unit
-    Move = Variant.kw_only(x=int, y=int).with_default(x=234569834)
-    ArgMove = Variant(x=int, y=int).with_default(x=234569834)
+    Move = Variant.kw_only(x=int, y=int).with_defaults(x=234569834)
+    ArgMove = Variant(x=int, y=int).with_defaults(x=234569834)
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
     Pause = Variant()
@@ -57,12 +57,12 @@ def test_misc():
     with pytest.raises(TypeError):
         @fieldenum
         class TupleDefault:
-            Move = Variant(int, int).with_default(a=123)
+            Move = Variant(int, int).with_defaults(a=123)
 
     with pytest.raises(TypeError):
         @fieldenum
         class FieldlessDefault:
-            Move = Variant().with_default(a=123)
+            Move = Variant().with_defaults(a=123)
 
 
 def test_mutable_fieldenum():

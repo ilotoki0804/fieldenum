@@ -85,8 +85,7 @@ class Variant:
 
         raise TypeError(f"Type of value is not expected. Expected type: {field!r}, actual type: {type(value)!r} and value: {value!r}")
 
-    def with_default(self, **defaults) -> typing.Self:
-        """**Experimental Feature**"""
+    def with_defaults(self, **defaults) -> typing.Self:
         _, named_field = self.field
         if not named_field:
             raise TypeError("Only named variants can have defaults.")
