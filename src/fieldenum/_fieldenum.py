@@ -25,9 +25,7 @@ class Variant:
 
         return self
 
-    @classmethod
-    def kw_only(cls, **named_field):
-        self = cls(**named_field)
+    def kw_only(self) -> typing.Self:
         self._kw_only = True
         return self
 

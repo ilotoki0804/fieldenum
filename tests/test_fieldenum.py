@@ -11,7 +11,7 @@ from fieldenum._utils import NotAllowed
 @fieldenum
 class Message:
     Quit = Unit
-    Move = Variant.kw_only(x=int, y=int).with_defaults(x=234569834)
+    Move = Variant(x=int, y=int).kw_only().with_defaults(x=234569834)
     ArgMove = Variant(x=int, y=int).with_defaults(x=234569834)
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
@@ -69,7 +69,7 @@ def test_mutable_fieldenum():
     @fieldenum(frozen=False)
     class Message:
         Quit = Unit
-        Move = Variant.kw_only(x=int, y=int)
+        Move = Variant(x=int, y=int).kw_only()
         Write = Variant(str)
         ChangeColor = Variant(int, int, int)
         Pause = Variant()
@@ -131,7 +131,7 @@ def test_instancing():
     @fieldenum
     class Message[T]:
         Quit = Unit
-        Move = Variant.kw_only(x=int, y=int)
+        Move = Variant(x=int, y=int).kw_only()
         Write = Variant(str)
         ChangeColor = Variant(int | str, T, Any)
         Pause = Variant()

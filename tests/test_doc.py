@@ -146,10 +146,10 @@ def test_kw_only():
 
     @fieldenum
     class Cord:
-        D1 = Variant.kw_only(x=float)
-        D2 = Variant.kw_only(x=float, y=float)
-        D3 = Variant.kw_only(x=float, y=float, z=float)
-        D4 = Variant.kw_only(timestamp=float, x=float, y=float, z=float)
+        D1 = Variant(x=float).kw_only()
+        D2 = Variant(x=float, y=float).kw_only()
+        D3 = Variant(x=float, y=float, z=float).kw_only()
+        D4 = Variant(timestamp=float, x=float, y=float, z=float).kw_only()
 
     Cord.D3(x=1343.5, y=25.2, z=465.312)
     with pytest.raises(TypeError):

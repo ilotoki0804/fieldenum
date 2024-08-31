@@ -165,17 +165,17 @@ match cord:
         print(f"x-y cord is ({x}, {y}) at {time}")
 ```
 
-또한 `.kw_only()`를 통해 인스턴스화하면 위치 인자 사용을 금지하고 키워드 인자만 사용하도록 설정할 수 있습니다.
+또한 `.kw_only()`를 이용하면 위치 인자 사용을 금지하고 키워드 인자만 사용하도록 설정할 수 있습니다.
 
 ```python
 from fieldenum import Variant, Unit, fieldenum, unreachable
 
 @fieldenum
 class Cord:
-    D1 = Variant.kw_only(x=float)
-    D2 = Variant.kw_only(x=float, y=float)
-    D3 = Variant.kw_only(x=float, y=float, z=float)
-    D4 = Variant.kw_only(timestamp=float, x=float, y=float, z=float)
+    D1 = Variant(x=float).kw_only()
+    D2 = Variant(x=float, y=float).kw_only()
+    D3 = Variant(x=float, y=float, z=float).kw_only()
+    D4 = Variant(timestamp=float, x=float, y=float, z=float).kw_only()
 
 Cord.D1(x=123.456)  # 가능
 Cord.D3(x=1343.5, y=25.2, z=465.312)  # 가능
