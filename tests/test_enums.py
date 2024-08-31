@@ -75,7 +75,7 @@ def test_bound_result():
         BoundResult.Failed(ValueError("error"), ValueError).unwrap()
     assert BoundResult.Failed(Exception("err"), Exception).unwrap(34556) == 34556
     assert BoundResult.Success(False, Exception)
-    assert not BoundResult.Failed(True, Exception)
+    assert not BoundResult.Failed(Exception("Some exception."), Exception)
 
     assert BoundResult.Success(2342, Exception).map_as_is(str) == BoundResult.Success("2342", Exception)
     error = ValueError(123)

@@ -201,6 +201,15 @@ class BoundResult[R, E: BaseException]:
     def __bool__(self) -> bool:
         return isinstance(self, BoundResult.Success)
 
+    def __post_init__(self):
+        if not issubclass(self.bound, BaseException):
+            raise IncompatibleBoundError(f"{self.bound} is not an exception.")
+
+        if isinstance(self, Failed) and not isinstance(self.error, self.bound):
+            raise IncompatibleBoundError(
+                f"Bound {self.bound.__qualname__!r} is not compatible with existing error: {type(self.error).__qualname__}."
+            )
+
     @overload
     def unwrap(self) -> R: ...
 
@@ -241,10 +250,6 @@ class BoundResult[R, E: BaseException]:
                 return BoundResult.Success(value, bound)
 
             case BoundResult.Failed(error, _):
-                if not isinstance(error, bound):
-                    raise IncompatibleBoundError(
-                        f"New bound {bound.__qualname__!r} is incompatible with existing error: {type(error).__qualname__}."
-                    )
                 return BoundResult.Failed(error, bound)
 
             case other:
@@ -275,10 +280,6 @@ class BoundResult[R, E: BaseException]:
                 return BoundResult.Success(ok, bound)
 
             case BoundResult.Failed(error, _):
-                if not isinstance(error, bound):
-                    raise IncompatibleBoundError(
-                        f"Bound {bound.__qualname__!r} is not compatible with existing error: {type(error).__qualname__}."
-                    )
                 return BoundResult.Failed(error, bound)
 
             case other:
