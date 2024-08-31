@@ -227,7 +227,7 @@ class Variant:
 
                     for name in named_field:
                         value = kwargs[name]
-                        field = named_field[name]
+                        # field = named_field[name]
                         setattr(self, name, value)
 
                     post_init = getattr(self, "__post_init__", lambda: None)
@@ -373,13 +373,14 @@ def fieldenum(
 
     class_attributes = vars(cls)
     has_own_hash = "__hash__" in class_attributes
+    build_hash = eq and not has_own_hash
 
     for attr in class_attributes.values():
         if isinstance(attr, Variant | UnitDescriptor):
             attr.attach(
                 cls,
                 eq=eq,
-                build_hash=eq and not has_own_hash,
+                build_hash=build_hash,
                 frozen=frozen,
             )
 
