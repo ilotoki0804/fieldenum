@@ -13,7 +13,7 @@ T = typing.TypeVar("T")
 
 
 class Variant:
-    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults", "_kw_only")
+    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults", "_default_factories", "_kw_only")
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -45,6 +45,7 @@ class Variant:
         self.attached = False
         self._kw_only = False
         self._defaults = {}
+        self._default_factories = {}
         if tuple_field and named_field:
             raise TypeError("Cannot mix tuple fields and named fields. Use named fields.")
         self.field = (tuple_field, named_field)
@@ -56,12 +57,20 @@ class Variant:
     if typing.TYPE_CHECKING:
         def dump(self): ...
 
-    def with_defaults(self, **defaults) -> typing.Self:
+    def default(self, **defaults) -> typing.Self:
         _, named_field = self.field
         if not named_field:
             raise TypeError("Only named variants can have defaults.")
 
         self._defaults = defaults
+        return self
+
+    def default_factory(self, **default_factories) -> typing.Self:
+        _, named_field = self.field
+        if not named_field:
+            raise TypeError("Only named variants can have defaults.")
+
+        self._default_factories = default_factories
         return self
 
     def attach(
@@ -149,6 +158,7 @@ class Variant:
                 __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = item._slots_names
                 __defaults__ = item._defaults
+                __factories__ = item._default_factories
                 __slots__ = ()
                 if not item._kw_only:
                     __match_args__ = item._slots_names
@@ -202,6 +212,11 @@ class Variant:
 
                     if self.__defaults__:
                         kwargs = self.__defaults__ | kwargs
+
+                    if self.__factories__:
+                        for name, factory in self.__factories__.items():
+                            if name not in kwargs:
+                                kwargs[name] = factory()
 
                     if missed_keys := kwargs.keys() ^ named_field.keys():
                         raise TypeError(f"Key mismatch: {missed_keys}")

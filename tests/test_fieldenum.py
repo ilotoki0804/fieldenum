@@ -11,11 +11,20 @@ from fieldenum._utils import NotAllowed
 @fieldenum
 class Message:
     Quit = Unit
-    Move = Variant(x=int, y=int).kw_only().with_defaults(x=234569834)
-    ArgMove = Variant(x=int, y=int).with_defaults(x=234569834)
+    Move = Variant(x=int, y=int).kw_only().default(x=234569834)
+    ArgMove = Variant(x=int, y=int).default(x=234569834)
+    FactoryTest = Variant(x=int, y=list, z=dict).default_factory(y=list, z=lambda: {"hello": "world"})
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
     Pause = Variant()
+
+
+def test_default_factory():
+    message = Message.FactoryTest(x=234, y=[12, 3], z={})
+    assert message.dump() == dict(x=234, y=[12, 3], z={})
+
+    message = Message.FactoryTest(x=456)
+    assert message.dump() == dict(x=456, y=[], z={"hello": "world"})
 
 
 def test_none_kw_only():
@@ -57,12 +66,12 @@ def test_misc():
     with pytest.raises(TypeError):
         @fieldenum
         class TupleDefault:
-            Move = Variant(int, int).with_defaults(a=123)
+            Move = Variant(int, int).default(a=123)
 
     with pytest.raises(TypeError):
         @fieldenum
         class FieldlessDefault:
-            Move = Variant().with_defaults(a=123)
+            Move = Variant().default(a=123)
 
 
 def test_mutable_fieldenum():
