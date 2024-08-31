@@ -150,6 +150,10 @@ class Variant:
 
                     for name, field, value in zip(item._slots_names, tuple_field, args, strict=True):
                         setattr(self, name, value)
+
+                    post_init = getattr(self, "__post_init__", lambda: None)
+                    post_init()
+
             self._actual = TupleConstructedVariant
 
         elif named_field:
@@ -226,6 +230,9 @@ class Variant:
                         field = named_field[name]
                         setattr(self, name, value)
 
+                    post_init = getattr(self, "__post_init__", lambda: None)
+                    post_init()
+
             self._actual = NamedConstructedVariant
 
         else:
@@ -254,7 +261,9 @@ class Variant:
                     return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
                 def __init__(self) -> None:
-                    pass
+                    post_init = getattr(self, "__post_init__", lambda: None)
+                    post_init()
+
             self._actual = FieldlessConstructedVariant
         # fmt: on
 
