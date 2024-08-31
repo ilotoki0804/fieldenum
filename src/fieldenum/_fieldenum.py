@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import copyreg
-import types
 import typing
-import warnings
 from contextlib import suppress
 
 from ._utils import NotAllowed, OneTimeSetter, ParamlessSingletonMeta, unpickle
@@ -60,31 +58,6 @@ class Variant:
     if typing.TYPE_CHECKING:
         def dump(self): ...
 
-    def check_type(self, field, value, /):
-        """Should raise error when type is mismatched."""
-
-        if field in (typing.Any, typing.Self):
-            return
-
-        if type(field) in (
-            typing.TypeAlias, types.GenericAlias, typing.TypeVar,  # typing-only things
-            getattr(typing, "TypeAliasType", None),  # type aliases (added in python 3.12)
-            str,  # possibly type alias
-        ):
-            return
-
-        try:
-            if isinstance(value, field):
-                return
-        except TypeError:
-            warnings.warn(
-                f"`isinstance` raised TypeError which mean type of field({field!r}, type: {type(field).__name__}) is not supported. "
-                "Contact developer to `check_type` supports it."
-            )
-            return
-
-        raise TypeError(f"Type of value is not expected. Expected type: {field!r}, actual type: {type(value)!r} and value: {value!r}")
-
     def with_defaults(self, **defaults) -> typing.Self:
         _, named_field = self.field
         if not named_field:
@@ -101,7 +74,6 @@ class Variant:
         eq: bool,
         build_hash: bool,
         frozen: bool,
-        runtime_check: bool,
     ) -> None | typing.Self:
         if self.attached:
             raise TypeError(f"This variants already attached to {self._base.__name__!r}.")
@@ -170,8 +142,6 @@ class Variant:
                         raise TypeError(f"Expect {len(tuple_field)} field(s), but received {len(args)} argument(s).")
 
                     for name, field, value in zip(item._slots_names, tuple_field, args, strict=True):
-                        if runtime_check:
-                            getattr(self, "check_type", item.check_type)(field, value)
                         setattr(self, name, value)
             self._actual = TupleConstructedVariant
 
@@ -241,9 +211,6 @@ class Variant:
                     for name in named_field:
                         value = kwargs[name]
                         field = named_field[name]
-
-                        if runtime_check:
-                            getattr(self, "check_type", item.check_type)(field, value)
                         setattr(self, name, value)
 
             self._actual = NamedConstructedVariant
@@ -315,7 +282,6 @@ class UnitDescriptor:
         eq: bool,  # not needed since nothing to check equality
         build_hash: bool,
         frozen: bool,
-        runtime_check: bool,  # nothing to check
     ):
         if self.name is None:
             raise TypeError("`self.name` is not set.")
@@ -360,14 +326,12 @@ def fieldenum(
     *,
     eq: bool = True,
     frozen: bool = True,
-    runtime_check: bool = False,
 ):
     if cls is None:
         return lambda cls: fieldenum(
             cls,
             eq=eq,
             frozen=frozen,
-            runtime_check=runtime_check,
         )
 
     # Preventing subclassing fieldenums at runtime.
@@ -395,7 +359,6 @@ def fieldenum(
                 eq=eq,
                 build_hash=eq and not has_own_hash,
                 frozen=frozen,
-                runtime_check=runtime_check,
             )
 
     with suppress(Exception):

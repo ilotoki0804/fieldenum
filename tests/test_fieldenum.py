@@ -46,7 +46,7 @@ def test_misc():
             New = Variant(str, x=int)
 
     with pytest.raises(TypeError, match="self.name"):
-        Unit.attach(Message, eq=True, build_hash=False, frozen=False, runtime_check=False)
+        Unit.attach(Message, eq=True, build_hash=False, frozen=False)
 
     with pytest.raises(TypeError):
         message = Message.Move(x=123, y=567)
@@ -125,10 +125,10 @@ def test_relationship():
     assert isinstance(Message.Pause(), Message)
 
 
-def test_instancing_and_runtime_check():
+def test_instancing():
     type MyTypeAlias = int | str | bytes
 
-    @fieldenum(runtime_check=True)
+    @fieldenum
     class Message[T]:
         Quit = Unit
         Move = Variant.kw_only(x=int, y=int)
@@ -143,23 +143,6 @@ def test_instancing_and_runtime_check():
     Message.ChangeColor("hello", (), 123)
     Message.ChangeColor(1234, [], b"bytes")
     Message.Pause()
-
-    with pytest.raises(TypeError):
-        Message.Move(x=1234)  # incomplete
-    with pytest.raises(TypeError):
-        Message.Move(x=1234, y="hello")
-    with pytest.raises(TypeError):
-        Message.Move(x="hello", y="world")
-    with pytest.raises(TypeError):
-        Message.Write([])
-    with pytest.raises(TypeError):
-        Message.ChangeColor((), 1343, 1234)
-    with pytest.raises(TypeError):
-        Message.Pause(1234)
-    with pytest.raises(TypeError):
-        Message.Write(x=2)
-    with pytest.raises(TypeError):
-        Message.Move(123)
 
 
 def test_eq_and_hash():
@@ -264,32 +247,3 @@ def test_repr():
     assert repr(Message.Write) == "<class 'fieldenum._fieldenum.Message.Write'>"
     assert repr(Message.ChangeColor) == "<class 'fieldenum._fieldenum.Message.ChangeColor'>"
     assert repr(Message.Pause) == "<class 'fieldenum._fieldenum.Message.Pause'>"
-
-
-def test_check_type() -> None:
-    class TypeCheckFailed(Exception):
-        pass
-
-    @fieldenum(runtime_check=True)
-    class Message:
-        Quit = Unit
-        Move = Variant(x=int, y=int)
-        Move2 = Variant(x=str, y=str)
-        Write = Variant(str)
-        ChangeColor = Variant(int, int, int)
-        ChangeColor2 = Variant(str, str, str)
-        Pause = Variant()
-
-        def check_type(self, field, value):
-            if field is int:
-                raise TypeCheckFailed()
-
-    Message.Quit
-    with pytest.raises(TypeCheckFailed):
-        Message.Move(x=1, y=2)
-    Message.Move2(x="1", y="2")
-    Message.Write("hello")
-    with pytest.raises(TypeCheckFailed):
-        Message.ChangeColor(1, 2, 3)
-    Message.ChangeColor2("1", "2", "3")
-    Message.Pause()

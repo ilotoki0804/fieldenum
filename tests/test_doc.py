@@ -104,33 +104,6 @@ def test_tuple_variant():
     Message.Var3(123, "hello", {1: "world"})  # OK
 
 
-def test_runtime():
-    from fieldenum import Unit, Variant, fieldenum, unreachable
-
-    @fieldenum(runtime_check=True)
-    class Message[T]:
-        # 일반 타입은 `isinstance()`를 통해 확인됩니다.
-        Quit = Variant(int)
-        # 제너릭은 검사되지 않습니다.
-        Stay = Variant(T)
-        # 각각의 파라미터에 타입을 체크합니다.
-        # 이때 Union (이 경우 `str | int`)는 체크되지만
-        # generic alias (이 경우`dict[int, str]`)는 체크되지 않습니다.
-        Var3 = Variant(int, str | int, dict[int, str])
-
-    Message.Quit(123)  # 오류 없음
-    with pytest.raises(TypeError):
-        Message.Quit("invalid")  # TypeError
-    Message.Stay("hello")  # 오류 없음
-    Message.Stay(1234)  # 잘못됐지만 오류 없음
-    Message.Var3(123, "hello", {1: "world"})  # 오류 없음
-    Message.Var3(123, 123, {1: "world"})  # 오류 없음
-    with pytest.raises(TypeError):
-        Message.Stay(123, 123.456, {1: "world"})  # TypeError
-    Message.Var3(123, "hello", {"hello": "world"})  # 잘못됐지만 오류 없음
-    Message.Var3(123, "hello", 123)  # 잘못됐지만 오류 없음
-
-
 def test_named_variant():
     from fieldenum import Variant, Unit, fieldenum, unreachable
 

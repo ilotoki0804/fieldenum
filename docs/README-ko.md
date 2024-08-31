@@ -111,35 +111,6 @@ Message.Var3(123, "hello", {1: "world"})  # OK
 
 튜플의 값에는 타입이 적히는데, 이는 런타임에 확인되지는 않는 어노테이션에 가깝습니다.
 
-그러나 값이 확인되는 것을 원한다면, `runtime_check`를 `True`로 하세요.
-
-```python
-from fieldenum import Variant, Unit, fieldenum, unreachable
-
-@fieldenum(runtime_check=True)  # 런타입 체크를 켭니다.
-class Message[T]:
-    # 일반 타입은 `isinstance()`를 통해 확인됩니다.
-    Quit = Variant(int)
-    # 제너릭은 검사되지 않습니다.
-    Stay = Variant(T)
-    # 각각의 파라미터에 타입을 체크합니다.
-    # 이때 Union (이 경우 `str | int`)는 체크되지만
-    # generic alias (이 경우`dict[int, str]`)는 체크되지 않습니다.
-    Var3 = Variant(int, str | int, dict[int, str])
-
-Message.Quit(123)  # 오류 없음
-Message.Quit("invalid")  # TypeError (타입 오류)
-Message.Stay("hello")  # 오류 없음
-Message.Stay(1234)  # 잘못됐지만 오류 없음 (제너릭)
-Message.Var3(123, "hello", {1: "world"})  # 오류 없음
-Message.Var3(123, 123, {1: "world"})  # 오류 없음
-Message.Stay(123, 123.456, {1: "world"})  # TypeError (Union 타입 오류)
-Message.Var3(123, "hello", {"hello": "world"})  # 잘못됐지만 오류 없음 (제너릭 alias)
-Message.Var3(123, "hello", 123)  # 잘못됐지만 오류 없음 (제너릭 alias)
-```
-
-타입 확인 기능은 이름 있는 베리언트에서도 동일하게 적용됩니다.
-
 ### 이름 있는 배리언트
 
 이름 있는 배리언트는 순서가 없는 여러 키워드로 이루어진 배리언트입니다.

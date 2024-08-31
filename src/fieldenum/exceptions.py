@@ -20,9 +20,5 @@ def unreachable(value=_MISSING) -> _NoReturn:
     )
 
 
-class TypeCheckFailedError(FieldEnumError):
-    pass
-
-
 class IncompatibleBoundError(FieldEnumError):
     pass
