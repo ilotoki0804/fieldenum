@@ -9,7 +9,7 @@ from contextlib import suppress
 from ._utils import NotAllowed, OneTimeSetter, ParamlessSingletonMeta, unpickle
 from .exceptions import unreachable
 
-Base = typing.TypeVar("Base")
+T = typing.TypeVar("T")
 
 
 class Variant:
@@ -266,12 +266,12 @@ class UnitDescriptor:
         setattr(owner, name, UnitDescriptor(name))
 
     @typing.overload
-    def __get__(self, obj, objtype: type[Base] = ...) -> Base: ...  # type: ignore
+    def __get__(self, obj, objtype: type[T] = ...) -> T: ...  # type: ignore
 
     @typing.overload
     def __get__(self, obj, objtype: None = ...) -> typing.Self: ...
 
-    def __get__(self, obj, objtype: type[Base] | None = None) -> Base | typing.Self:
+    def __get__(self, obj, objtype: type[T] | None = None) -> T | typing.Self:
         return self
 
     def attach(
