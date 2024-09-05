@@ -274,10 +274,17 @@ class Variant:
         return self._actual(*args, **kwargs)
 
 
-def variant(cls):
+def variant(cls=None, kw_only: bool = False):
+    if cls is None:
+        return lambda cls: variant(cls, kw_only)
+
     fields = cls.__annotations__
     defaults = {field_name: getattr(cls, field_name) for field_name in fields if hasattr(cls, field_name)}
-    return Variant(**fields).default(**defaults)
+
+    constructed = Variant(**fields).default(**defaults)
+    if kw_only:
+        constructed = constructed.kw_only()
+    return constructed
 
 
 # MARK: UnitDescriptor
