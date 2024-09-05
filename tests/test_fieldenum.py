@@ -4,7 +4,7 @@ import pickle
 from typing import Any, Self
 
 import pytest
-from fieldenum import Unit, Variant, fieldenum, unreachable
+from fieldenum import Unit, Variant, fieldenum, unreachable, variant
 from fieldenum._utils import NotAllowed
 
 
@@ -17,6 +17,20 @@ class Message:
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
     Pause = Variant()
+
+    @variant
+    class ClassVariant:
+        x: int
+        y: "Message"
+        z: str = "hello"
+
+
+def test_class_variant():
+    variant = Message.ClassVariant(123, Message.Quit)
+    assert variant.dump() == dict(x=123, y=Message.Quit, z="hello")
+
+    variant = Message.ClassVariant(123, y=Message.ArgMove(y=34))
+    assert variant.dump() == dict(x=123, y=Message.ArgMove(x=234569834, y=34), z="hello")
 
 
 def test_default_factory():

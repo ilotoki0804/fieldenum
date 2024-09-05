@@ -274,6 +274,12 @@ class Variant:
         return self._actual(*args, **kwargs)
 
 
+def variant(cls):
+    fields = cls.__annotations__
+    defaults = {field_name: getattr(cls, field_name) for field_name in fields if hasattr(cls, field_name)}
+    return Variant(**fields).default(**defaults)
+
+
 # MARK: UnitDescriptor
 
 
