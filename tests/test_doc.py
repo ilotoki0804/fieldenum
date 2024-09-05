@@ -223,3 +223,30 @@ def test_unit():
     # 두 배리언트 모두 싱글톤이기에 `is` 연산자로 동일성을 확인할 수 있습니다.
     assert unit is NoFieldVariants.UnitVariant
     assert fieldless is NoFieldVariants.FieldlessVariant()
+
+
+def test_class_named():
+    from fieldenum import Variant, Unit, fieldenum, unreachable, variant
+
+    @fieldenum
+    class Product:
+        @variant
+        class Liquid:
+            product: str
+            amount: float
+            price_per_unit: float
+            unit: str = "L"
+            currency: str = "USD"
+
+        @variant
+        class Quantifiable:
+            product: str
+            count: int
+            price: float
+            currency: str = "USD"
+
+    gasoline = Product.Liquid("gasoline", amount=5, price_per_unit=200, unit="barrel")
+    mouse = Product.Quantifiable("mouse", count=23, price=8)
+
+    assert gasoline.dump() == dict(product="gasoline", amount=5, price_per_unit=200, unit="barrel", currency="USD")
+    assert mouse.dump() == dict(product="mouse", count=23, price=8, currency="USD")

@@ -185,6 +185,38 @@ Cord.D2(123.456, y=789.0)  # XXX: 불가능
 Cord.D3(1.2, 2.3, 3.4)  # XXX: 불가능
 ```
 
+### 클래스형 이름 있는 배리언트
+
+배리언트는 `@variant`로 감싼 클래스의 형태로 제작할 수 있습니다.
+
+```python
+from fieldenum import Variant, Unit, fieldenum, unreachable, variant
+
+@fieldenum
+class Product:
+    @variant
+    class Liquid:
+        product: str
+        amount: float
+        price_per_unit: float
+        unit: str = "L"
+        currency: str = "USD"
+
+    @variant
+    class Quantifiable:
+        product: str
+        count: int
+        price: float
+        currency: str = "USD"
+
+gasoline = Product.Liquid("gasoline", amount=5, price_per_unit=200, unit="barrel")
+mouse = Product.Quantifiable("mouse", count=23, price=8)
+```
+
+이때 타입 힌트 없이 값만 작성한 값이나 메서드 등은 필드에서 빠지며 무시됩니다.
+즉, `@variant`를 통해 이름 있는 배리언트를 만든다면 결과적으로 Variant를 사용하는 것과 크게 다름이 없으며,
+현재로서는 보기 조금 편하게 하는 것 이외에는 특별한 기능은 없습니다.
+
 ### match문을 이용한 enum의 사용
 
 `enum`은 파이썬 3.10에서 추가된 match문과 같이 사용하면 매우 어울립니다.
