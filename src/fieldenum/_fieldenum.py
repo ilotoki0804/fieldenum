@@ -398,6 +398,6 @@ def fieldenum(
             )
 
     with suppress(Exception):
-        cls.__init__ = NotAllowed("Base fieldenums cannot be initialized.", name="__init__")
+        cls.__init__ = NotAllowed("A base fieldenum cannot be initialized.", name="__init__")
 
     return typing.final(cls)
