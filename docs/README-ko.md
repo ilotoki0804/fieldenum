@@ -1240,4 +1240,5 @@ get_message(123)  # will raise TypeError (GOOD)
 
 ## Releases
 
+* 0.2.0: `as_is` 함수들을 따로 분리, 각종 버그 수정, UnwrapFailedError 및 NotAllowedError 제거, 타입 힌트 개선, `kw_only()` 메서드 추가, 이름 있는 배리언트에서 인자로 사용 허용, `with_default()` 메서드 `default()`로 이름 변경, `default_factory()` 메서드 추가, `runtime_check` 인자 제거, `__post_init__()` 메서드 호출 추가, `BoundResult`에 서브클래스 검증 추가, `@variant` 데코레이터 추가
 * 0.1.0: 첫 릴리즈
