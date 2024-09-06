@@ -4,7 +4,7 @@ import pickle
 from typing import Any, Self
 
 import pytest
-from fieldenum import Unit, Variant, fieldenum, unreachable, variant
+from fieldenum import Unit, Variant, factory, fieldenum, unreachable, variant
 from fieldenum._utils import NotAllowed
 
 
@@ -13,7 +13,7 @@ class Message:
     Quit = Unit
     Move = Variant(x=int, y=int).kw_only().default(x=234569834)
     ArgMove = Variant(x=int, y=int).default(x=234569834)
-    FactoryTest = Variant(x=int, y=list, z=dict).default_factory(y=list, z=lambda: {"hello": "world"})
+    FactoryTest = Variant(x=int, y=list, z=dict).default(y=factory(list), z=factory(lambda: {"hello": "world"}))
     Write = Variant(str)
     ChangeColor = Variant(int, int, int)
     Pause = Variant()

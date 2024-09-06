@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copyreg
+import inspect
 import typing
 from contextlib import suppress
 
@@ -13,7 +14,7 @@ T = typing.TypeVar("T")
 
 
 class Variant:
-    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults", "_default_factories", "_kw_only")
+    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults_and_factories", "_kw_only")
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -44,8 +45,7 @@ class Variant:
     def __init__(self, *tuple_field, **named_field) -> None:
         self.attached = False
         self._kw_only = False
-        self._defaults = {}
-        self._default_factories = {}
+        self._defaults_and_factories = {}
         if tuple_field and named_field:
             raise TypeError("Cannot mix tuple fields and named fields. Use named fields.")
         self.field = (tuple_field, named_field)
@@ -57,20 +57,12 @@ class Variant:
     if typing.TYPE_CHECKING:
         def dump(self): ...
 
-    def default(self, **defaults) -> typing.Self:
+    def default(self, **defaults_and_factories) -> typing.Self:
         _, named_field = self.field
         if not named_field:
             raise TypeError("Only named variants can have defaults.")
 
-        self._defaults = defaults
-        return self
-
-    def default_factory(self, **default_factories) -> typing.Self:
-        _, named_field = self.field
-        if not named_field:
-            raise TypeError("Only named variants can have defaults.")
-
-        self._default_factories = default_factories
+        self._defaults_and_factories = defaults_and_factories
         return self
 
     def attach(
@@ -161,8 +153,7 @@ class Variant:
                 __name__ = item.name
                 __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = item._slots_names
-                __defaults__ = item._defaults
-                __factories__ = item._default_factories
+                __defaults_and_factories__ = item._defaults_and_factories
                 __slots__ = ()
                 if not item._kw_only:
                     __match_args__ = item._slots_names
@@ -214,13 +205,13 @@ class Variant:
                                 raise TypeError(f"Inconsistent input for field '{field_name}': received both positional and keyword values")
                             kwargs[field_name] = arg
 
-                    if self.__defaults__:
-                        kwargs = self.__defaults__ | kwargs
-
-                    if self.__factories__:
-                        for name, factory in self.__factories__.items():
+                    if self.__defaults_and_factories__:
+                        for name, default_or_factory in self.__defaults_and_factories__.items():
                             if name not in kwargs:
-                                kwargs[name] = factory()
+                                if isinstance(default_or_factory, factory):
+                                    kwargs[name] = default_or_factory.produce()
+                                else:
+                                    kwargs[name] = default_or_factory
 
                     if missed_keys := kwargs.keys() ^ named_field.keys():
                         raise TypeError(f"Key mismatch: {missed_keys}")
@@ -285,6 +276,14 @@ def variant(cls=None, kw_only: bool = False):
     if kw_only:
         constructed = constructed.kw_only()
     return constructed
+
+
+class factory(typing.Generic[T]):
+    def __init__(self, func: typing.Callable[[], T]):
+        self.__factory = func
+
+    def produce(self) -> T:
+        return self.__factory()
 
 
 # MARK: UnitDescriptor
