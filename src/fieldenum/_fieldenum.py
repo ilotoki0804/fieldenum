@@ -203,10 +203,7 @@ class Variant:
                     if item._defaults_and_factories:
                         for name, default_or_factory in item._defaults_and_factories.items():
                             if name not in kwargs:
-                                if isinstance(default_or_factory, factory):
-                                    kwargs[name] = default_or_factory.produce()
-                                else:
-                                    kwargs[name] = default_or_factory
+                                kwargs[name] = factory._produce_from(default_or_factory)
 
                     if missed_keys := kwargs.keys() ^ named_field.keys():
                         raise TypeError(f"Key mismatch: {missed_keys}")
@@ -276,6 +273,10 @@ def variant(cls=None, kw_only: bool = False):
 class factory(typing.Generic[T]):
     def __init__(self, func: typing.Callable[[], T]):
         self.__factory = func
+
+    @classmethod
+    def _produce_from(cls, value: factory[T] | T) -> T:
+        return value.produce() if isinstance(value, factory) else value  # type: ignore
 
     def produce(self) -> T:
         return self.__factory()
