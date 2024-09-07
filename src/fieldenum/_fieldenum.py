@@ -62,7 +62,7 @@ class Variant:
         if not named_field:
             raise TypeError("Only named variants can have defaults.")
 
-        self._defaults_and_factories = defaults_and_factories
+        self._defaults_and_factories.update(defaults_and_factories)
         return self
 
     def attach(
