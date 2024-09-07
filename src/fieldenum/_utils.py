@@ -7,14 +7,12 @@ which means they can be modified, deleted, or added without notice.
 from __future__ import annotations
 
 
-def unpickle(cls, name: str, state: tuple | dict | None):
-    variant = getattr(cls, name)
-    if state is None:
-        return variant
-    elif isinstance(state, tuple):
-        return variant(*state)
+def unpickle(cls, name: str, args, kwargs):
+    Variant = getattr(cls, name)
+    if args is None and kwargs is None:
+        return Variant
     else:
-        return variant(**state)
+        return Variant(*args, **kwargs)
 
 
 class NotAllowed:

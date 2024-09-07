@@ -143,7 +143,7 @@ class Variant:
                 @staticmethod
                 def _pickle(variant):
                     assert isinstance(variant, ConstructedVariant)
-                    return unpickle, (cls, self.name, tuple(getattr(variant, f"_{i}") for i in variant.__fields__))
+                    return unpickle, (cls, self.name, tuple(getattr(variant, f"_{i}") for i in variant.__fields__), {})
 
                 def dump(self) -> tuple:
                     return tuple(getattr(self, f"_{name}") for name in self.__fields__)
@@ -189,7 +189,7 @@ class Variant:
                 @staticmethod
                 def _pickle(variant):
                     assert isinstance(variant, ConstructedVariant)
-                    return unpickle, (cls, self.name, {name: getattr(variant, name) for name in variant.__fields__})
+                    return unpickle, (cls, self.name, (), {name: getattr(variant, name) for name in variant.__fields__})
 
                 def dump(self):
                     return {name: getattr(self, name) for name in self.__fields__}
@@ -246,7 +246,7 @@ class Variant:
                 @staticmethod
                 def _pickle(variant):
                     assert isinstance(variant, ConstructedVariant)
-                    return unpickle, (cls, self.name, ())
+                    return unpickle, (cls, self.name, (), {})
 
                 def dump(self):
                     return ()
@@ -345,7 +345,7 @@ class UnitDescriptor:
             @staticmethod
             def _pickle(variant):
                 assert isinstance(variant, UnitConstructedVariant)
-                return unpickle, (cls, self.name, None)
+                return unpickle, (cls, self.name, None, None)
 
             def __init__(self):
                 pass
