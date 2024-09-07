@@ -153,7 +153,6 @@ class Variant:
                 __name__ = item.name
                 __qualname__ = f"{cls.__qualname__}.{item.name}"
                 __fields__ = item._slots_names
-                __defaults_and_factories__ = item._defaults_and_factories
                 __slots__ = ()
                 if not item._kw_only:
                     __match_args__ = item._slots_names
@@ -205,8 +204,8 @@ class Variant:
                                 raise TypeError(f"Inconsistent input for field '{field_name}': received both positional and keyword values")
                             kwargs[field_name] = arg
 
-                    if self.__defaults_and_factories__:
-                        for name, default_or_factory in self.__defaults_and_factories__.items():
+                    if item._defaults_and_factories:
+                        for name, default_or_factory in item._defaults_and_factories.items():
                             if name not in kwargs:
                                 if isinstance(default_or_factory, factory):
                                     kwargs[name] = default_or_factory.produce()
