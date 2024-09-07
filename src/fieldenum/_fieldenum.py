@@ -182,10 +182,6 @@ class Variant:
                 def dump(self):
                     return {name: getattr(self, name) for name in self.__fields__}
 
-                if eq:
-                    def __eq__(self, other: typing.Self):
-                        return type(self) is type(other) and self.dump() == other.dump()
-
                 def __repr__(self) -> str:
                     values_repr = ', '.join(f'{name}={getattr(self, f"_{name}" if isinstance(name, int) else name)!r}' for name in self.__fields__)
                     return f"{item._base.__name__}.{self.__name__}({values_repr})"
