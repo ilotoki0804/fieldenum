@@ -270,3 +270,17 @@ def test_repr():
     assert repr(Message.Write) == "<class 'fieldenum._fieldenum.Message.Write'>"
     assert repr(Message.ChangeColor) == "<class 'fieldenum._fieldenum.Message.ChangeColor'>"
     assert repr(Message.Pause) == "<class 'fieldenum._fieldenum.Message.Pause'>"
+
+
+def test_multiple_assignment():
+    variant = Variant(x=int)
+    @fieldenum
+    class OneVariant:
+        my = variant
+    assert variant.attached
+    with pytest.raises(TypeError, match="This variants already attached to"):
+        @fieldenum
+        class AnotherVariant:
+            my = variant
+    with pytest.raises(TypeError, match="This variants already attached to"):
+        variant.attach(object, eq=True, build_hash=True, frozen=True)

@@ -14,9 +14,21 @@ T = typing.TypeVar("T")
 
 
 class Variant:
-    __slots__ = ("name", "field", "attached", "_slots_names", "_base", "_generics", "_actual", "_defaults_and_factories", "_kw_only")
+    __slots__ = (
+        "name",
+        "field",
+        "attached",
+        "_slots_names",
+        "_base",
+        "_generics",
+        "_actual",
+        "_defaults_and_factories",
+        "_kw_only",
+    )
 
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner, name) -> None:
+        if self.attached:
+            raise TypeError(f"This variants already attached to {self._base.__name__!r}.")
         self.name = name
 
     def __get__(self, obj, objtype=None) -> typing.Self:
