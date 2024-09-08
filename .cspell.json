@@ -4,6 +4,7 @@
         "fieldenums",
         "Fieldless",
         "objtype",
-        "Paramless"
+        "Paramless",
+        "POSITIONALS"
     ]
 }

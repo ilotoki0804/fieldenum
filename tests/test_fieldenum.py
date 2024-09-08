@@ -8,6 +8,11 @@ from fieldenum import Unit, Variant, factory, fieldenum, unreachable, variant
 from fieldenum._utils import NotAllowed
 
 
+class ExceptionForTest(Exception):
+    def __init__(self, value):
+        self.value = value
+
+
 @fieldenum
 class Message:
     Quit = Unit
@@ -24,6 +29,37 @@ class Message:
         y: "Message"
         z: str = "hello"
 
+    @variant(kw_only=True)
+    class KwOnlyClassVariant:
+        x: int
+        y: "Message"
+        z: str = "hello"
+
+    @variant
+    def FunctionVariantWithBody(self, a: int, b, /, c: str, d, *, f: float = 3.4, e: dict | None = None, raise_it: bool = False):
+        if raise_it:
+            raise ExceptionForTest((self, a, b, c, d, f, e))
+
+    @variant
+    def FunctionVariant(a: int, b, /, c: str, d, *, f: float = factory(float), e: dict | None = factory(lambda: {"hello": "good"})):
+        raise ExceptionForTest((a, b, c, d, f, e))
+
+    @variant
+    def NotNoneReturnFunctionVariant(self, a: int, b, /, c: str, d, *, f: float = factory(float), e: dict | None = factory(lambda: {"hello": "good"})):
+        return 123
+
+    @variant
+    def ArgsOnlyFuncVariant(a, b, /, c, d):
+        pass
+
+    @variant
+    def KwargsOnlyFuncVariant(*, a, b, c, d=None):
+        pass
+
+    @variant
+    def ParamlessFuncVariantWithBody(self):
+        pass
+
 
 def test_class_variant():
     variant = Message.ClassVariant(123, Message.Quit)
@@ -31,6 +67,15 @@ def test_class_variant():
 
     variant = Message.ClassVariant(123, y=Message.ArgMove(y=34))
     assert variant.dump() == dict(x=123, y=Message.ArgMove(x=234569834, y=34), z="hello")
+
+    variant = Message.KwOnlyClassVariant(x=123, y=Message.ArgMove(y=34))
+    assert variant.dump() == dict(x=123, y=Message.ArgMove(x=234569834, y=34), z="hello")
+
+    with pytest.raises(TypeError):
+        Message.KwOnlyClassVariant(123, y=Message.ArgMove(y=34))
+
+    with pytest.raises(TypeError):
+        Message.KwOnlyClassVariant(123, Message.ArgMove(y=34))
 
 
 def test_default_factory():
@@ -97,20 +142,28 @@ def test_mutable_fieldenum():
         ChangeColor = Variant(int, int, int)
         Pause = Variant()
 
-    with pytest.raises(TypeError):
+        @variant
+        def FunctionVariantWithBody(self, a: int, b, /, c: str, d, *, f: float = 3.4, e: dict | None = None, raise_it: bool = False):
+            if raise_it:
+                raise ExceptionForTest((self, a, b, c, d, f, e))
+
+    with pytest.raises(TypeError, match="unhashable type:"):
         {Message.Quit}
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="unhashable type:"):
         {Message.Move(x=123, y=345)}
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="unhashable type:"):
         {Message.Write("hello")}
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="unhashable type:"):
         {Message.ChangeColor(123, 456, 789)}
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="unhashable type:"):
         {Message.Pause()}
+
+    with pytest.raises(TypeError, match="unhashable type:"):
+        {Message.FunctionVariantWithBody(1, 2, "hello", d=123, f=1.3, e={"hello": "world"})}
 
     message = Message.Move(x=123, y=345)
     message.x = 654
@@ -129,6 +182,11 @@ def test_mutable_fieldenum():
 
     assert Message.Quit.dump() is None
     assert Message.Pause().dump() == ()
+
+    message = Message.FunctionVariantWithBody(1, 2, "hello", d=123, f=1.3, e={"hello": "world"})
+    message.a = 235
+    message.e = [235, 346]
+    assert message.dump() == dict(a=235, b=2, c="hello", d=123, f=1.3, e=[235, 346], raise_it=False)
 
 
 def test_relationship():
@@ -167,25 +225,42 @@ def test_instancing():
     Message.ChangeColor(1234, [], b"bytes")
     Message.Pause()
 
+    with pytest.raises(TypeError, match=r"Expect 3 field\(s\), but received 4 argument\(s\)\."):
+        Message.ChangeColor(1, 2, 3, 4)
+
+    with pytest.raises(TypeError, match=r"Expect 3 field\(s\), but received 4 argument\(s\)\."):
+        Message.ChangeColor(1, 2, 3, 4)
+
+    with pytest.raises(TypeError, match="x"):
+        Message.Move(y=4)
+
+    with pytest.raises(TypeError, match="hello"):
+        Message.Move(hello=4)
+
 
 def test_eq_and_hash():
     assert Message.ChangeColor(1, ("hello",), [1, 2, 3]) == Message.ChangeColor(1, ("hello",), [1, 2, 3])
+    assert Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"}) == Message.FunctionVariant(
+        1, 2, "hello", d=123, f=1.3, e={"hello": "world"})
     my_set = {
         Message.ChangeColor(1, ("hello",), (1, 2, 3)),
         Message.Quit,
         Message.Move(x=234, y=(2, "hello")),
         Message.Pause(),
+        Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e="world")
     }
     assert Message.ChangeColor(1, ("hello",), (1, 2, 3)) in my_set
     assert Message.Quit in my_set
     assert Message.Move(x=234, y=(2, "hello")) in my_set
     assert Message.Pause() in my_set
+    assert Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e="world") in my_set
 
     my_set.add(Message.ChangeColor(1, ("hello",), (1, 2, 3)))
     my_set.add(Message.Quit)
     my_set.add(Message.Move(x=234, y=(2, "hello")))
     my_set.add(Message.Pause())
-    assert len(my_set) == 4
+    my_set.add(Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e="world"))
+    assert len(my_set) == 5
 
 
 @pytest.mark.parametrize(
@@ -196,6 +271,7 @@ def test_eq_and_hash():
         Message.Pause(),
         Message.Write("hello"),
         Message.Quit,
+        Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"}),
     ],
 )
 def test_pickling(message):
@@ -227,6 +303,7 @@ def test_complex_matching():
         (Message.Pause(), "fieldless"),
         (Message.Write("hello"), ("write", "hello")),
         (Message.Quit, "quit"),
+        (Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"}), "function_variant"),
     ],
 )
 def test_simple_matching(message, expect):
@@ -246,6 +323,9 @@ def test_simple_matching(message, expect):
         case Message.Move(x=123, y=y):
             assert expect == ("move", y)
 
+        case Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"}):
+            assert expect == "function_variant"
+
     # don't do these
     match message:
         case Message.ChangeColor(x, y):
@@ -264,12 +344,17 @@ def test_repr():
     assert repr(Message.Write("hello!")) == "Message.Write('hello!')"
     assert repr(Message.ChangeColor(123, 456, 789)) == "Message.ChangeColor(123, 456, 789)"
     assert repr(Message.Pause()) == "Message.Pause()"
+    assert repr(Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"})) == "Message.FunctionVariant(1, 2, 'hello', 123, f=1.3, e={'hello': 'world'})"
+    assert repr(Message.ArgsOnlyFuncVariant(1,2,3,d=4)) == "Message.ArgsOnlyFuncVariant(1, 2, 3, 4)"
+    assert repr(Message.KwargsOnlyFuncVariant(a=1,b=2,c=3)) == "Message.KwargsOnlyFuncVariant(a=1, b=2, c=3, d=None)"
+    assert repr(Message.ParamlessFuncVariantWithBody()) == "Message.ParamlessFuncVariantWithBody()"
 
     assert repr(Message.Quit) == "Message.Quit"
     assert repr(Message.Move) == "<class 'fieldenum._fieldenum.Message.Move'>"
     assert repr(Message.Write) == "<class 'fieldenum._fieldenum.Message.Write'>"
     assert repr(Message.ChangeColor) == "<class 'fieldenum._fieldenum.Message.ChangeColor'>"
     assert repr(Message.Pause) == "<class 'fieldenum._fieldenum.Message.Pause'>"
+    assert repr(Message.FunctionVariant) == "<class 'fieldenum._fieldenum.Message.FunctionVariant'>"
 
 
 def test_multiple_assignment():
@@ -284,3 +369,40 @@ def test_multiple_assignment():
             my = variant
     with pytest.raises(TypeError, match="This variants already attached to"):
         variant.attach(object, eq=True, build_hash=True, frozen=True)
+
+
+def test_function_variant():
+    message = Message.FunctionVariantWithBody(1, 2, "hello", d=123, f=1.3, e={"hello": "world"})
+    assert message.dump() == dict(a=1, b=2, c="hello", d=123, f=1.3, e={"hello": "world"}, raise_it=False)
+    try:
+        Message.FunctionVariantWithBody(1, 2, "hello", d=123, f=1.3, e={"hello": "world"}, raise_it=True)
+    except ExceptionForTest as exc:
+        message, *others = exc.value
+        assert isinstance(message, Message)
+        assert isinstance(message, Message.FunctionVariantWithBody)
+        assert others == [1, 2, "hello", 123, 1.3, {"hello": "world"}]
+
+    message = Message.FunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"})
+    assert message.dump() == dict(a=1, b=2, c="hello", d=123, f=1.3, e={"hello": "world"})
+
+    message = Message.FunctionVariant(1, 2, "hello", d=123)
+    assert message.dump() == dict(a=1, b=2, c="hello", d=123, f=0.0, e={"hello": "good"})
+
+    with pytest.raises(TypeError, match="Initializer should return None."):
+        Message.NotNoneReturnFunctionVariant(1, 2, "hello", d=123, f=1.3, e={"hello": "world"})
+
+
+def test_method_abuse_on_function_variant():
+    @variant
+    def MyVariant(self, hello, world):
+        raise ValueError
+
+    with pytest.raises(TypeError, match="method cannot be used in function variant"):
+        @fieldenum
+        class NeverGonnaBeUsed:
+            V = MyVariant.kw_only()
+
+    with pytest.raises(TypeError, match="method cannot be used in function variant"):
+        @fieldenum
+        class NeverGonnaBeUsed:
+            V = MyVariant.default(hello=123)

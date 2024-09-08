@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copyreg
 import inspect
+import types
 import typing
 from contextlib import suppress
 
@@ -269,16 +270,197 @@ class Variant:
         return self._actual(*args, **kwargs)
 
 
-def variant(cls=None, kw_only: bool = False):
-    if cls is None:
-        return lambda cls: variant(cls, kw_only)
+POSITIONALS = (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
-    fields = cls.__annotations__
-    defaults = {field_name: getattr(cls, field_name) for field_name in fields if hasattr(cls, field_name)}
 
-    constructed = Variant(**fields).default(**defaults)
-    if kw_only:
-        constructed = constructed.kw_only()
+class _FunctionVariant(Variant):
+    __slots__ = ("_func", "_signature", "_match_args", "_self_included")
+    name: str
+
+    def __init__(self, func: types.FunctionType) -> None:
+        assert type(func) is types.FunctionType, "Type other than function is not allowed."
+        self.attached = False
+        self._func = func
+        signature = inspect.signature(func)
+        parameters_raw = signature.parameters
+        self._signature = signature
+
+        parameters_iter = iter(parameters_raw)
+        self._self_included = next(parameters_iter) == "self"
+
+        parameter_names = tuple(parameters_iter) if self._self_included else tuple(parameters_raw)
+        self._slots_names = parameter_names
+        self.field = ((), parameter_names)
+        self._match_args = tuple(
+            name for name in parameter_names
+            if parameters_raw[name].kind in POSITIONALS
+        )
+
+    def kw_only(self) -> typing.NoReturn:
+        raise TypeError(
+            "`.kw_only()` method cannot be used in function variant. "
+            "Use function keyword-only specifier(asterisk) instead."
+        )
+
+    def default(self, **_) -> typing.NoReturn:
+        raise TypeError(
+            "`.default()` method cannot be used in function variant. "
+            "Use function defaults instead."
+        )
+
+    def attach(
+        self,
+        cls,
+        /,
+        *,
+        eq: bool,
+        build_hash: bool,
+        frozen: bool,
+    ) -> None | typing.Self:
+        if self.attached:
+            raise TypeError(f"This variants already attached to {self._base.__name__!r}.")
+
+        self._base = cls
+        item = self
+
+        # fmt: off
+        class ConstructedVariant(cls):
+            if frozen and not typing.TYPE_CHECKING:
+                __slots__ = tuple(f"__original_{name}" for name in item._slots_names)
+                for name in item._slots_names:
+                    # to prevent potential security risk
+                    if name.isidentifier():
+                        exec(f"{name} = OneTimeSetter()")
+                    else:
+                        unreachable(name)
+                        OneTimeSetter()  # Show IDEs that OneTimeSetter is used. Not executed at runtime.
+            else:
+                __slots__ = item._slots_names
+
+            __name__ = item.name
+            __qualname__ = f"{cls.__qualname__}.{item.name}"
+            __fields__ = item._slots_names
+            __match_args__ = item._match_args
+
+            if build_hash:
+                __slots__ += ("_hash",)
+
+                if frozen:
+                    def __hash__(self) -> int:
+                        with suppress(AttributeError):
+                            return self._hash
+
+                        self._hash = hash(tuple(self.dump().items()))
+                        return self._hash
+                else:
+                    __hash__ = None  # type: ignore
+
+            if eq:
+                def __eq__(self, other: typing.Self):
+                    return type(self) is type(other) and self.dump() == other.dump()
+
+            def _get_positions(self) -> tuple[dict[str, typing.Any], dict[str, typing.Any]]:
+                match_args = self.__match_args__
+                args_dict = {}
+                kwargs = {}
+                for name in self.__fields__:
+                    if name in match_args:
+                        args_dict[name] = getattr(self, name)
+                    else:
+                        kwargs[name] = getattr(self, name)
+                return args_dict, kwargs
+
+            @staticmethod
+            def _pickle(variant):
+                assert isinstance(variant, ConstructedVariant)
+                args_dict, kwargs = variant._get_positions()
+                return unpickle, (cls, self.name, tuple(args_dict.values()), kwargs)
+
+            def dump(self):
+                return {name: getattr(self, name) for name in self.__fields__}
+
+            if eq:
+                def __eq__(self, other: typing.Self):
+                    return type(self) is type(other) and self.dump() == other.dump()
+
+            def __repr__(self) -> str:
+                args_dict, kwargs = self._get_positions()
+                args_repr = ", ".join(repr(value) for value in args_dict.values())
+                kwargs_repr = ", ".join(
+                    f'{name}={value!r}'
+                    for name, value in kwargs.items()
+                )
+
+                if args_repr and kwargs_repr:
+                    values_repr = f"{args_repr}, {kwargs_repr}"
+                else:
+                    values_repr = f"{args_repr}{kwargs_repr}"
+
+                return f"{item._base.__name__}.{self.__name__}({values_repr})"
+
+            def __init__(self, *args, **kwargs) -> None:
+                bound = (
+                    item._signature.bind(None, *args, **kwargs)
+                    if item._self_included
+                    else item._signature.bind(*args, **kwargs)
+                )
+
+                # code from Signature.apply_defaults()
+                arguments = bound.arguments
+                new_arguments = {}
+                for name, param in item._signature.parameters.items():
+                    try:
+                        value = arguments[name]
+                    except KeyError:
+                        assert param.default is not inspect._empty, "Argument is not properly bound."
+                        value = param.default
+                    new_arguments[name] = factory._produce_from(value)
+                bound.arguments = new_arguments  # type: ignore # why not OrderedDict? I don't know
+
+                for name, value in new_arguments.items():
+                    if item._self_included and name == "self":
+                        continue
+                    setattr(self, name, value)
+
+                if item._self_included:
+                    bound.arguments["self"] = self
+                    result = item._func(*bound.args, **bound.kwargs)
+                    if result is not None:
+                        raise TypeError("Initializer should return None.")
+        # fmt: on
+
+        self._actual = ConstructedVariant
+        copyreg.pickle(self._actual, self._actual._pickle)
+        self.attached = True
+
+
+@typing.overload
+def variant(cls: type, /) -> Variant: ...
+
+@typing.overload
+def variant(*, kw_only: bool = False) -> typing.Callable[[type], Variant]: ...
+
+@typing.overload
+def variant(func: types.FunctionType, /) -> Variant: ...
+
+def variant(cls_or_func=None, /, *, kw_only: bool = False) -> typing.Any:
+    if cls_or_func is None:
+        return lambda cls_or_func: variant(cls_or_func, kw_only=kw_only)  # type: ignore
+
+    if isinstance(cls_or_func, types.FunctionType):
+        constructed = _FunctionVariant(cls_or_func)
+
+    else:
+        fields = cls_or_func.__annotations__
+        defaults = {
+            field_name: getattr(cls_or_func, field_name)
+            for field_name in fields if hasattr(cls_or_func, field_name)
+        }
+
+        constructed = Variant(**fields).default(**defaults)
+        if kw_only:
+            constructed = constructed.kw_only()
+
     return constructed
 
 
