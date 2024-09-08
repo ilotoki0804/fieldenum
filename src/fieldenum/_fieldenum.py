@@ -14,7 +14,7 @@ from .exceptions import unreachable
 T = typing.TypeVar("T")
 
 
-class Variant:
+class Variant:  # MARK: Variant
     __slots__ = (
         "name",
         "field",
@@ -273,7 +273,7 @@ class Variant:
 POSITIONALS = (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
 
-class _FunctionVariant(Variant):
+class _FunctionVariant(Variant):  # MARK: FunctionVariant
     __slots__ = ("_func", "_signature", "_match_args", "_self_included")
     name: str
 
@@ -443,7 +443,7 @@ def variant(*, kw_only: bool = False) -> typing.Callable[[type], Variant]: ...
 @typing.overload
 def variant(func: types.FunctionType, /) -> Variant: ...
 
-def variant(cls_or_func=None, /, *, kw_only: bool = False) -> typing.Any:
+def variant(cls_or_func=None, /, *, kw_only: bool = False) -> typing.Any:  # MARK: variant
     if cls_or_func is None:
         return lambda cls_or_func: variant(cls_or_func, kw_only=kw_only)  # type: ignore
 
@@ -464,7 +464,7 @@ def variant(cls_or_func=None, /, *, kw_only: bool = False) -> typing.Any:
     return constructed
 
 
-class factory(typing.Generic[T]):
+class factory(typing.Generic[T]):  # MARK: factory
     def __init__(self, func: typing.Callable[[], T]):
         self.__factory = func
 
@@ -476,10 +476,7 @@ class factory(typing.Generic[T]):
         return self.__factory()
 
 
-# MARK: UnitDescriptor
-
-
-class UnitDescriptor:
+class UnitDescriptor:  # MARK: Unit
     __slots__ = ("name",)
     __fields__ = ()
 

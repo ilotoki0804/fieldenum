@@ -33,6 +33,7 @@ class NotAllowed:
 
 class OneTimeSetter:
     def __set_name__(self, owner, name):
+        self.name = name
         self.private_name = f"__original_{name}"
 
     def __get__(self, obj, objtype=None):
@@ -40,7 +41,7 @@ class OneTimeSetter:
 
     def __set__(self, obj, value):
         if hasattr(obj, self.private_name):
-            raise TypeError(f"Field `{self.private_name.lstrip('__original_')}` is frozen thus cannot mutate.")
+            raise TypeError(f"Cannot mutate attribute `{self.name}` since it's frozen.")
         setattr(obj, self.private_name, value)
 
 
