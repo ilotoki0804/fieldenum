@@ -24,7 +24,7 @@ class Option[T]:
         Nothing = Unit
         class Some[T](Option[T]):
             __match_args__ = ("_0",)
-            __fields__ = ("_0",)
+            __fields__ = (0,)
 
             @property
             def _0(self) -> T: ...
@@ -449,7 +449,7 @@ class Message:
 
         class Write(Message):
             __match_args__ = ("_0",)
-            __fields__ = ("_0",)
+            __fields__ = (0,)
 
             @property
             def _0(self) -> str: ...
@@ -460,7 +460,7 @@ class Message:
 
         class ChangeColor(Message):
             __match_args__ = ("_0", "_1", "_2")
-            __fields__ = ("_0", "_1", "_2")
+            __fields__ = (0, 1, 2)
 
             @property
             def _0(self) -> int: ...
