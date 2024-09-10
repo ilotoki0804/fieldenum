@@ -574,7 +574,8 @@ def fieldenum(
     has_own_hash = "__hash__" in class_attributes
     build_hash = eq and not has_own_hash
 
-    for attr in class_attributes.values():
+    attrs = []
+    for name, attr in class_attributes.items():
         if isinstance(attr, Variant | UnitDescriptor):
             attr.attach(
                 cls,
@@ -582,8 +583,9 @@ def fieldenum(
                 build_hash=build_hash,
                 frozen=frozen,
             )
+            attrs.append(name)
 
-    with suppress(Exception):
-        cls.__init__ = NotAllowed("A base fieldenum cannot be initialized.", name="__init__")
+    cls.__variants__ = attrs
+    cls.__init__ = NotAllowed("A base fieldenum cannot be initialized.", name="__init__")
 
     return typing.final(cls)
