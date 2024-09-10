@@ -85,6 +85,7 @@ class Variant:  # MARK: Variant
         *,
         eq: bool,
         build_hash: bool,
+        build_repr: bool,
         frozen: bool,
     ) -> None | typing.Self:
         if self.attached:
@@ -137,9 +138,10 @@ class Variant:  # MARK: Variant
                     def __eq__(self, other: typing.Self):
                         return type(self) is type(other) and self.dump() == other.dump()
 
-                def __repr__(self) -> str:
-                    values_repr = ", ".join(repr(getattr(self, f"_{name}" if isinstance(name, int) else name)) for name in self.__fields__)
-                    return f"{item._base.__name__}.{self.__name__}({values_repr})"
+                if build_repr:
+                    def __repr__(self) -> str:
+                        values_repr = ", ".join(repr(getattr(self, f"_{name}" if isinstance(name, int) else name)) for name in self.__fields__)
+                        return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
                 @staticmethod
                 def _pickle(variant):
@@ -315,6 +317,7 @@ class _FunctionVariant(Variant):  # MARK: FunctionVariant
         *,
         eq: bool,
         build_hash: bool,
+        build_repr: bool,
         frozen: bool,
     ) -> None | typing.Self:
         if self.attached:
@@ -383,20 +386,21 @@ class _FunctionVariant(Variant):  # MARK: FunctionVariant
                 def __eq__(self, other: typing.Self):
                     return type(self) is type(other) and self.dump() == other.dump()
 
-            def __repr__(self) -> str:
-                args_dict, kwargs = self._get_positions()
-                args_repr = ", ".join(repr(value) for value in args_dict.values())
-                kwargs_repr = ", ".join(
-                    f'{name}={value!r}'
-                    for name, value in kwargs.items()
-                )
+            if build_repr:
+                def __repr__(self) -> str:
+                    args_dict, kwargs = self._get_positions()
+                    args_repr = ", ".join(repr(value) for value in args_dict.values())
+                    kwargs_repr = ", ".join(
+                        f'{name}={value!r}'
+                        for name, value in kwargs.items()
+                    )
 
-                if args_repr and kwargs_repr:
-                    values_repr = f"{args_repr}, {kwargs_repr}"
-                else:
-                    values_repr = f"{args_repr}{kwargs_repr}"
+                    if args_repr and kwargs_repr:
+                        values_repr = f"{args_repr}, {kwargs_repr}"
+                    else:
+                        values_repr = f"{args_repr}{kwargs_repr}"
 
-                return f"{item._base.__name__}.{self.__name__}({values_repr})"
+                    return f"{item._base.__name__}.{self.__name__}({values_repr})"
 
             def __init__(self, *args, **kwargs) -> None:
                 bound = (
@@ -502,6 +506,7 @@ class UnitDescriptor:  # MARK: Unit
         *,
         eq: bool,  # not needed since nothing to check equality
         build_hash: bool,
+        build_repr: bool,
         frozen: bool,
     ):
         if self.name is None:
@@ -529,8 +534,9 @@ class UnitDescriptor:  # MARK: Unit
             def __init__(self):
                 pass
 
-            def __repr__(self):
-                return f"{cls.__name__}.{self.__name__}"
+            if build_repr:
+                def __repr__(self):
+                    return f"{cls.__name__}.{self.__name__}"
 
         copyreg.pickle(UnitConstructedVariant, UnitConstructedVariant._pickle)
 
@@ -573,6 +579,7 @@ def fieldenum(
     class_attributes = vars(cls)
     has_own_hash = "__hash__" in class_attributes
     build_hash = eq and not has_own_hash
+    build_repr = cls.__repr__ is object.__repr__
 
     attrs = []
     for name, attr in class_attributes.items():
@@ -581,6 +588,7 @@ def fieldenum(
                 cls,
                 eq=eq,
                 build_hash=build_hash,
+                build_repr=build_repr,
                 frozen=frozen,
             )
             attrs.append(name)

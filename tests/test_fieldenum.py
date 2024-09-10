@@ -114,7 +114,7 @@ def test_misc():
             New = Variant(str, x=int)
 
     with pytest.raises(TypeError, match="self.name"):
-        Unit.attach(Message, eq=True, build_hash=False, frozen=False)
+        Unit.attach(Message, eq=True, build_hash=False, build_repr=False, frozen=False)
 
     with pytest.raises(TypeError):
         message = Message.Move(x=123, y=567)
@@ -368,7 +368,7 @@ def test_multiple_assignment():
         class AnotherVariant:
             my = variant
     with pytest.raises(TypeError, match="This variants already attached to"):
-        variant.attach(object, eq=True, build_hash=True, frozen=True)
+        variant.attach(object, eq=True, build_hash=True, build_repr=True, frozen=True)
 
 
 def test_function_variant():
