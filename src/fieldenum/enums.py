@@ -7,7 +7,8 @@ WARNING: This submodule can only be imported on Python 3.12 or later.
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Any, Callable, final, overload
+import sys
+from typing import TYPE_CHECKING, Any, Callable, NoReturn, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
 from .exceptions import IncompatibleBoundError
@@ -243,6 +244,9 @@ class BoundResult[R, E: BaseException]:
 
             case other:
                 unreachable(other)
+
+    def exit(self, error_code: str | int | None = 1) -> NoReturn:
+        sys.exit(error_code if self else 0)
 
     def rebound[NewBound: BaseException](self, bound: type[NewBound], /) -> BoundResult[R, NewBound]:
         match self:
