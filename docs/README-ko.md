@@ -99,7 +99,7 @@ from fieldenum import Variant, Unit, fieldenum, unreachable
 @fieldenum
 class Message[T]:
     Quit = Variant(int)  # Variant(...)와 같이 적고 안에는 타입을 적습니다.
-    Stay = Variant(T)  # 제너릭도 사용 가능합니다.
+    Stay = Variant(T)  # 제너릭도 사용 가능합니다. 다만 타입 힌트로서의 의미 그 이상은 없습니다.
     Var3 = Variant(int, str, dict[int, str])  # 여러 값을 이어서 적으면 각각이 파라미터가 됩니다.
 
 
@@ -187,7 +187,7 @@ Cord.D3(1.2, 2.3, 3.4)  # XXX: 불가능
 
 ### 클래스형 이름 있는 배리언트
 
-배리언트는 `@variant`로 감싼 클래스의 형태로 제작할 수 있습니다.
+배리언트는 `@variant`(`Variant`와 달리 소문자로 시작합니다)로 감싼 클래스의 형태로 제작할 수 있습니다.
 
 ```python
 from fieldenum import Variant, Unit, fieldenum, unreachable, variant
@@ -199,7 +199,7 @@ class Product:
         product: str
         amount: float
         price_per_unit: float
-        unit: str = "L"
+        unit: str = "liter"
         currency: str = "USD"
 
     @variant
@@ -216,6 +216,77 @@ mouse = Product.Quantifiable("mouse", count=23, price=8)
 이때 타입 힌트 없이 값만 작성한 값이나 메서드 등은 필드에서 빠지며 무시됩니다.
 즉, `@variant`를 통해 이름 있는 배리언트를 만든다면 결과적으로 Variant를 사용하는 것과 크게 다름이 없으며,
 현재로서는 보기 조금 편하게 하는 것 이외에는 특별한 기능은 없습니다.
+
+### 함수형 배리언트
+
+위에서 설명한 모든 배리언트들은 실제 함수의 표현력에는 미치지 못합니다.
+위치 인자나 키워드 인자 사용을 인자별로 각각 조절하지 못할 뿐더러 타입 힌트는 항상 실행되고 기본값을 지정하는 문법은 조금 복잡합니다.
+
+함수형 배리언트는 이러한 문제를 깔끔히 해결합니다.
+
+```python
+from fieldenum import Variant, Unit, factory, fieldenum, unreachable, variant
+
+@fieldenum
+class Product:
+    @variant
+    def Liquid(
+        product: str,
+        amount: float,
+        /,
+        price_per_unit: float,
+        *,
+        unit: str = "liter",
+        currency: str = "USD",
+        extras: dict = factory(dict)
+    ):
+        pass
+```
+
+위의 `Product.Liquid` 함수는 정확히 똑같은 형태로 값을 초기화합니다.
+즉,
+
+* `product`와 `amount`는 위치 인자로만 받습니다.
+* `price_per_unit`은 위치 인자로도, 키워드 인자로도 넘길 수 있습니다.
+* `unit`, `currency`는 키워드 인자로만 받으며, 인자가 없을 경우 설정된 기본값으로 자동으로 설정됩니다.
+* `extras`는 키워드 인자로 받습니다. `factory(dict)`에 대해서는 조금 이따가 설명드릴게요.
+
+함수형 배리언트는 익숙한 형태이고, 다른 형태들에서는 실현할 수 없는 형태를 만들 수 있다는 장점이 있습니다.
+
+또한 함수형 배리언트는 body를 가질 수 있습니다.
+기본적으로 함수의 body는 실행되지 않지만, 만약 첫 번째 인자가 `self`라면 함수의 body가 값과 함께 실행됩니다.
+이때 함수의 파라미터로 주어지는 값과 `self`로 전해지는 배리언트는 서로 같으니
+
+### `__post_init__`
+
+fieldenum은 `__post_init__`을 가질 수 있습니다. 이 메서드를 통해 클래스를 준비하거나 몇 가지 체크를 할 수 있습니다.
+
+```python
+from fieldenum import Variant, Unit, factory, fieldenum, unreachable, variant
+
+@fieldenum
+class Product:
+    @variant
+    def Liquid(
+        product: str,
+        amount: float,
+        /,
+        price_per_unit: float,
+        *,
+        unit: str = "liter",
+        currency: str = "USD",
+        extras: dict = factory(dict)
+    ):
+        pass
+```
+
+
+이때 있다면 **__post_init__은 실행되지 않고 함수 바디가 실행됩니다**.
+물론 만약 원한다면 `self.__post_init__()`을 실행시킬 수도 있습니다.
+
+### 기본값과 기본값 팩토리
+
+fieldenum의 
 
 ### match문을 이용한 enum의 사용
 
