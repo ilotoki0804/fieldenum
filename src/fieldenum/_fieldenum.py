@@ -482,7 +482,7 @@ class factory(typing.Generic[T]):  # MARK: factory
 
 class UnitDescriptor:  # MARK: Unit
     __slots__ = ("name",)
-    __fields__ = ()
+    __fields__ = None
 
     def __init__(self, name: str | None = None):
         self.name = name
