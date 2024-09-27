@@ -8,7 +8,7 @@ import types
 import typing
 from contextlib import suppress
 
-from ._utils import NotAllowed, OneTimeSetter, ParamlessSingletonMeta, unpickle
+from ._utils import OneTimeSetter, ParamlessSingletonMeta, unpickle
 from .exceptions import unreachable
 
 T = typing.TypeVar("T")
@@ -594,6 +594,10 @@ def fieldenum(
             attrs.append(name)
 
     cls.__variants__ = attrs
-    cls.__init__ = NotAllowed("A base fieldenum cannot be initialized.", name="__init__")
+    cls.__init__ = _init_not_allowed
 
     return typing.final(cls)
+
+
+def _init_not_allowed(*args, **kwargs) -> typing.NoReturn:
+    raise TypeError("A base fieldenum cannot be initialized.")

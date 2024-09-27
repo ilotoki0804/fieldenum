@@ -15,22 +15,6 @@ def unpickle(cls, name: str, args, kwargs):
         return Variant(*args, **kwargs)
 
 
-class NotAllowed:
-    def __init__(self, message: str | None = None, name: str | None = None):
-        self.error_message = message
-        if name is not None:
-            self.name = name
-
-    def __set_name__(self, owner, name):
-        self.name = name
-
-    def __get__(self, obj, objtype=None):
-        if objtype is None:
-            return self
-
-        raise TypeError(self.error_message or f"The method/attribute {self.name!r} is not allowed to be used.")
-
-
 class OneTimeSetter:
     def __set_name__(self, owner, name):
         self.name = name

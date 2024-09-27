@@ -5,7 +5,6 @@ from typing import Any, Self
 
 import pytest
 from fieldenum import Unit, Variant, factory, fieldenum, unreachable, variant
-from fieldenum._utils import NotAllowed
 
 
 class ExceptionForTest(Exception):
