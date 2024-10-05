@@ -89,6 +89,23 @@ def test_bound_result():
     ) == BoundResult.Failed(error, Exception)
 
 
+    with pytest.raises(SystemExit) as exc:
+        BoundResult.Success("success", Exception).exit()
+    assert exc.value.code == 0
+
+    with pytest.raises(SystemExit) as exc:
+        BoundResult.Failed(error, Exception).exit()
+    assert exc.value.code == 1
+
+    with pytest.raises(SystemExit) as exc:
+        BoundResult.Failed(error, Exception).exit("failed miserably...")
+    assert exc.value.code == "failed miserably..."
+
+    with pytest.raises(SystemExit) as exc:
+        BoundResult.Failed(error, Exception).exit(None)
+    assert exc.value.code == None
+
+
 @pytest.mark.parametrize(
     "second_param",
     [True, False],

@@ -246,7 +246,7 @@ class BoundResult[R, E: BaseException]:
                 unreachable(other)
 
     def exit(self, error_code: str | int | None = 1) -> NoReturn:
-        sys.exit(error_code if self else 0)
+        sys.exit(0 if self else error_code)
 
     def rebound[NewBound: BaseException](self, bound: type[NewBound], /) -> BoundResult[R, NewBound]:
         match self:
