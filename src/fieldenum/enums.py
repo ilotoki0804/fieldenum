@@ -188,7 +188,7 @@ class BoundResult[R, E: BaseException]:
             @property
             def bound(self) -> type[E]: ...
 
-            def __init__(self, error: E, bound: type[E]): ...
+            def __init__(self, error: BaseException, bound: type[E]): ...
 
             def dump(self) -> tuple[E, type[E]]: ...
 
@@ -202,14 +202,15 @@ class BoundResult[R, E: BaseException]:
     def __bool__(self) -> bool:
         return isinstance(self, BoundResult.Success)
 
-    def __post_init__(self):
-        if not issubclass(self.bound, BaseException):
-            raise IncompatibleBoundError(f"{self.bound} is not an exception.")
+    if __debug__:
+        def __post_init__(self):
+            if not issubclass(self.bound, BaseException):
+                raise IncompatibleBoundError(f"{self.bound} is not an exception.")
 
-        if isinstance(self, Failed) and not isinstance(self.error, self.bound):
-            raise IncompatibleBoundError(
-                f"Bound {self.bound.__qualname__!r} is not compatible with existing error: {type(self.error).__qualname__}."
-            )
+            if isinstance(self, Failed) and not isinstance(self.error, self.bound):
+                raise IncompatibleBoundError(
+                    f"Bound {self.bound.__qualname__!r} is not compatible with existing error: {type(self.error).__qualname__}."
+                )
 
     @overload
     def unwrap(self) -> R: ...

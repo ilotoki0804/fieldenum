@@ -508,7 +508,7 @@ class UnitDescriptor:  # MARK: Unit
         build_hash: bool,
         build_repr: bool,
         frozen: bool,
-    ):
+    ) -> None:
         if self.name is None:
             raise TypeError("`self.name` is not set.")
 
@@ -540,7 +540,7 @@ class UnitDescriptor:  # MARK: Unit
 
         copyreg.pickle(UnitConstructedVariant, UnitConstructedVariant._pickle)
 
-        # This will replace Unit to Specialized instance.
+        # This will replace Unit to specialized instance.
         setattr(cls, self.name, UnitConstructedVariant())
 
 
