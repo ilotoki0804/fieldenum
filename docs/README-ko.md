@@ -262,27 +262,26 @@ class Product:
 fieldenum은 `__post_init__`을 가질 수 있습니다. 이 메서드를 통해 클래스를 준비하거나 몇 가지 체크를 할 수 있습니다.
 
 ```python
-from fieldenum import Variant, Unit, factory, fieldenum, unreachable, variant
+from fieldenum import Variant, Unit, fieldenum, unreachable
 
 @fieldenum
-class Product:
-    @variant
-    def Liquid(
-        product: str,
-        amount: float,
-        /,
-        price_per_unit: float,
-        *,
-        unit: str = "liter",
-        currency: str = "USD",
-        extras: dict = factory(dict)
-    ):
-        pass
+class SpaceTime:
+    Dist = Variant(dist=float, velocity=float)
+    Cord = Variant(x=float, y=float, z=float, velocity=float)
+
+    def __post_init__(self):
+        if self.velocity > 299_792_458:
+            raise ValueError("The speed can't exceed the speed of light!")
+
+st = SpaceTime.Dist(3000, 402)  # OK
+st = SpaceTime.Cord(20, 35, 51, 42363)  # OK
+st = SpaceTime.Cord(2535, 350_000_000)  # The speed can't exceed the speed of light!
+
 ```
 
 
-이때 있다면 **__post_init__은 실행되지 않고 함수 바디가 실행됩니다**.
-물론 만약 원한다면 `self.__post_init__()`을 실행시킬 수도 있습니다.
+함수형 배리언트가 `self`를 가지고 있다면 **__post_init__은 실행되지 않고 함수 바디가 실행됩니다**.
+물론 만약 원한다면 `self.__post_init__()`을 직접 불러서 실행시킬 수도 있습니다.
 
 ### 기본값과 기본값 팩토리
 

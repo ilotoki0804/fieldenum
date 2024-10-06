@@ -250,3 +250,23 @@ def test_class_named():
 
     assert gasoline.dump() == dict(product="gasoline", amount=5, price_per_unit=200, unit="barrel", currency="USD")
     assert mouse.dump() == dict(product="mouse", count=23, price=8, currency="USD")
+
+
+def test_post_init():
+    from fieldenum import Variant, Unit, fieldenum, unreachable, variant
+
+    @fieldenum
+    class SpaceTime:
+        Dist = Variant(dist=float, velocity=float)
+        Cord = Variant(x=float, y=float, z=float, velocity=float)
+
+        def __post_init__(self):
+            if self.velocity > 299_792_458:
+                raise ValueError("The speed can't exceed the speed of light!")
+
+    st = SpaceTime.Dist(3000, 402)  # OK
+    assert st.dist == 3000
+    st = SpaceTime.Cord(20, 35, 51, 42363)  # OK
+    assert st.x == 20
+    with pytest.raises(ValueError, match="speed of light"):
+        st = SpaceTime.Dist(2535, 350_000_000)  # The speed can't exceed the speed of light!
