@@ -7,7 +7,7 @@
 [![Sponsoring](https://img.shields.io/badge/Sponsoring-Toss-blue?logo=GitHub%20Sponsors&logoColor=white)](https://toss.me/ilotoki)
 
 
-파이썬에서의 러스트 스타일의 필드형 enum
+파이썬에서의 러스트 스타일의 필드형 enum(ADT)
 
 **[English Docs](/README.md)**
 

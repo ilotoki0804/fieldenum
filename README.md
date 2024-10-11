@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/ilotoki0804/fieldenum/badge.svg?branch=master)](https://coveralls.io/github/ilotoki0804/fieldenum?branch=master)
 [![Sponsoring](https://img.shields.io/badge/Sponsoring-Toss-blue?logo=GitHub%20Sponsors&logoColor=white)](https://toss.me/ilotoki)
 
-Rust-like fielded Enums in Python
+Rust-like fielded Enums (ADT) in Python
 
 **[한국어로 보기](docs/README-ko.md)**
 
