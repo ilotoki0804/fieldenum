@@ -1,6 +1,7 @@
 import pytest
 from fieldenum import *
 from fieldenum.enums import *
+from fieldenum.exceptions import IncompatibleBoundError
 
 
 def test_option():
@@ -52,6 +53,7 @@ def test_option():
     my_option = Some("123")
     assert my_option.map(int).unwrap() == 123
     assert my_option.map_as_is(int).unwrap() == 123
+    assert Option.Nothing.map_as_is(int) == Option.Nothing
 
     # test wrap
     @Option.wrap
@@ -79,9 +81,22 @@ def test_bound_result():
 
     assert BoundResult.Success(2342, Exception).map_as_is(str) == BoundResult.Success("2342", Exception)
     error = ValueError(123)
+    def raising(error):
+        raise error
     assert BoundResult.Success(2342, Exception).map_as_is(
         lambda _: BoundResult.Failed(error, Exception)
     ).unwrap() == BoundResult.Failed(error, Exception)
+    assert BoundResult.Success(2342, Exception).map_as_is(
+        lambda _: raising(error)
+    ) == BoundResult.Failed(error, Exception)
+    with pytest.raises(ValueError):
+        BoundResult.Success(2342, ArithmeticError).map(
+            lambda _: BoundResult.Failed(error, Exception)
+        )
+    with pytest.raises(ValueError):
+        BoundResult.Success(2342, ArithmeticError).map(
+            lambda _: raising(error)
+        )
     error = ValueError(1234)
     assert BoundResult.Failed(error, Exception).map_as_is(str) == BoundResult.Failed(error, Exception)
     assert BoundResult.Success(2342, Exception).map(
@@ -104,6 +119,16 @@ def test_bound_result():
     with pytest.raises(SystemExit) as exc:
         BoundResult.Failed(error, Exception).exit(None)
     assert exc.value.code == None
+
+    # test __post_init__ of BoundResult
+    with pytest.raises(IncompatibleBoundError, match="not an exception"):
+        BoundResult.Success(None, int)  # type: ignore
+    with pytest.raises(IncompatibleBoundError, match="not an exception"):
+        BoundResult.Failed(ValueError("hello"), int)  # type: ignore
+    with pytest.raises(IncompatibleBoundError, match="not compatible"):
+        BoundResult.Failed(123, ValueError)  # type: ignore
+    with pytest.raises(IncompatibleBoundError, match="not compatible"):
+        BoundResult.Failed(Exception(345), ValueError)
 
 
 @pytest.mark.parametrize(
