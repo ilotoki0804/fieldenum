@@ -164,7 +164,7 @@ class Option[T]:
 @fieldenum
 class BoundResult[R, E: BaseException]:
     if TYPE_CHECKING:
-        class Success[R, E](BoundResult[R, E]):
+        class Success[R, E: BaseException](BoundResult[R, E]):
             __match_args__ = ("value", "bound")
             __fields__ = ("value", "bound")
 
@@ -178,7 +178,7 @@ class BoundResult[R, E: BaseException]:
 
             def dump(self) -> tuple[R, E]: ...
 
-        class Failed[R, E](BoundResult[R, E]):
+        class Failed[R, E: BaseException](BoundResult[R, E]):
             __match_args__ = ("error", "bound")
             __fields__ = ("error", "bound")
 
