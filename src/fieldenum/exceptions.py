@@ -20,5 +20,9 @@ def unreachable(value=_MISSING) -> _NoReturn:
     )
 
 
+class UnwrapFailedError(FieldEnumError):
+    pass
+
+
 class IncompatibleBoundError(FieldEnumError):
     pass

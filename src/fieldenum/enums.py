@@ -11,7 +11,7 @@ import sys
 from typing import TYPE_CHECKING, Any, Callable, NoReturn, final, overload
 
 from . import Unit, Variant, fieldenum, unreachable
-from .exceptions import IncompatibleBoundError
+from .exceptions import IncompatibleBoundError, UnwrapFailedError
 
 __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 
@@ -98,7 +98,7 @@ class Option[T]:
     def unwrap(self, default=_MISSING):
         match self:
             case Option.Nothing if default is _MISSING:
-                raise ValueError("Unwrap failed.")
+                raise UnwrapFailedError("Unwrap failed.")
 
             case Option.Nothing:
                 return default
@@ -110,14 +110,14 @@ class Option[T]:
                 unreachable(other)
 
     def expect(self, message_or_exception: str | BaseException, /) -> T:
-        match self:
-            case Option.Nothing if isinstance(message_or_exception, BaseException):
-                raise message_or_exception
+        match self, message_or_exception:
+            case Option.Nothing, BaseException() as exception:
+                raise exception
 
-            case Option.Nothing:
-                raise ValueError(message_or_exception)
+            case Option.Nothing, message:
+                raise UnwrapFailedError(message)
 
-            case Option.Some(value):
+            case Option.Some(value), _:
                 return value
 
             case other:
