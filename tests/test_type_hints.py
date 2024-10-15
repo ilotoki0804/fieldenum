@@ -17,20 +17,11 @@ def test_option():
     option = Option[str].new(None)
     assert_type(option, Option[str])
 
-    option = Option.new(Option.Some("hello"))
-    assert_type(option, Option[str])
+    option = Option.new(Option.new("hello"))
+    assert_type(option, Option[Option[str]])
 
     option = Option.new(Option.Nothing)
-    assert_type(option, Option)
-
-    option2: Option[str] = Option.new(Option.Nothing)
-    assert_type(option2, Option[str])
-
-    option = Option.new_as_is("hello")
-    assert_type(option, Option[str])
-
-    option = Option[str].new_as_is(None)
-    assert_type(option, Option[str])
+    assert_type(option, Option[Option])
 
     option = Option[str].Nothing
     assert_type(option, Option[str])
@@ -68,10 +59,10 @@ def test_option():
     assert_type(option6.map(lambda _: 1), Option[int])
 
     option = Option.Some("hello")
-    assert_type(option6.map(lambda _: Option.Some(1)), Option[int])
+    assert_type(option6.map(lambda _: Option.new(1)), Option[Option[int]])
 
     option = Option.Some("hello")
-    assert_type(option6.map(lambda _: Option[int].Nothing), Option[int])
+    assert_type(option6.map(lambda _: Option[int].Nothing), Option[Option[int]])
 
     @Option.wrap
     def wrapped[T](a: T) -> T | None:
@@ -84,13 +75,7 @@ def test_option():
     def wrapped2[T](a: T | None) -> Option[T]:
         return Option.new(a)
 
-    assert_type(wrapped2(1), Option[int])
-
-    @Option.wrap_as_is
-    def wrapped_as_is[T](a: T | None) -> Option[T]:
-        return Option.new(a)
-
-    assert_type(wrapped_as_is(1), Option[Option[int]])
+    assert_type(wrapped2(1), Option[Option[int]])
 
 
 def test_fieldenum():
@@ -101,4 +86,4 @@ def test_fieldenum():
             variant1 = Variant(int)
             variant3 = Variant(named=str)
             # should raise type checker error
-            variant3 = Variant(int, named=str)
+            variant3 = Variant(int, named=str)  # type: ignore

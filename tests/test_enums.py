@@ -1,7 +1,7 @@
 import pytest
 from fieldenum import *
 from fieldenum.enums import *
-from fieldenum.exceptions import IncompatibleBoundError
+from fieldenum.exceptions import IncompatibleBoundError, UnwrapFailedError
 
 
 def test_option():
@@ -9,11 +9,9 @@ def test_option():
 
     # test new
     assert Option.new(123) == Option.Some(123)
-    assert Option.new(Option.Some(123)) == Option.Some(123)
-    assert Option.new_as_is(Option.Some(123)) == Option.Some(Option.Some(123))
+    assert Option.new(Option.Some(123)) == Option.Some(Option.Some(123))
     assert Option.new(None) is Option.Nothing
-    assert Option.new(Option.Nothing) == Option.Nothing
-    assert Option.new_as_is(Option.Nothing) == Option.Some(Option.Nothing)
+    assert Option.new(Option.Nothing) == Option.Some(Option.Nothing)
 
     # test unwrap
     option = Option.Some(123)
@@ -22,7 +20,7 @@ def test_option():
     assert option.unwrap(456) == 123
     option = Option.Nothing
     assert option is Option.Nothing
-    with pytest.raises(ValueError):
+    with pytest.raises(UnwrapFailedError):
         option.unwrap()
     assert option.unwrap("default") == "default"
 
@@ -31,7 +29,7 @@ def test_option():
     assert option.expect("message") == "hello"
     assert option.expect(ValueError("message")) == "hello"
     option = Option.Nothing
-    with pytest.raises(ValueError, match="message"):
+    with pytest.raises(UnwrapFailedError, match="message"):
         option.expect("message")
     with pytest.raises(ValueError, match="message"):
         option.expect(ValueError("message"))
@@ -45,19 +43,13 @@ def test_option():
     assert option.map(int) == Option.Some(123)
     option = Option.Nothing
     assert option.map(int) is Option.Nothing
-    assert Some(123).map(lambda _: None) is Option.Nothing
-    assert Some(123).map(lambda _: Option.Nothing) is Option.Nothing
-    assert Some(123).map(lambda _: Option.Some(567)) == Option.Some(567)
-
-    # test map(func, as_is=True)
-    my_option = Some("123")
-    assert my_option.map(int).unwrap() == 123
-    assert my_option.map_as_is(int).unwrap() == 123
-    assert Option.Nothing.map_as_is(int) == Option.Nothing
+    assert Some(123).map(lambda _: None) == Option.Some(None)
+    assert Some(123).map(lambda _: Option.Nothing) == Option.Some(Option.Nothing)
+    assert Some(123).map(lambda _: Option.Some(567)) == Option.Some(Option.Some(567))
 
     # test wrap
     @Option.wrap
-    def func(returns):
+    def func[T](returns: T) -> T:
         return returns
 
     assert func(1233) == Some(1233)
@@ -79,29 +71,14 @@ def test_bound_result():
     assert BoundResult.Success(False, Exception)
     assert not BoundResult.Failed(Exception("Some exception."), Exception)
 
-    assert BoundResult.Success(2342, Exception).map_as_is(str) == BoundResult.Success("2342", Exception)
     error = ValueError(123)
     def raising(error):
         raise error
-    assert BoundResult.Success(2342, Exception).map_as_is(
-        lambda _: BoundResult.Failed(error, Exception)
-    ).unwrap() == BoundResult.Failed(error, Exception)
-    assert BoundResult.Success(2342, Exception).map_as_is(
-        lambda _: raising(error)
-    ) == BoundResult.Failed(error, Exception)
-    with pytest.raises(ValueError):
-        BoundResult.Success(2342, ArithmeticError).map(
-            lambda _: BoundResult.Failed(error, Exception)
-        )
     with pytest.raises(ValueError):
         BoundResult.Success(2342, ArithmeticError).map(
             lambda _: raising(error)
         )
     error = ValueError(1234)
-    assert BoundResult.Failed(error, Exception).map_as_is(str) == BoundResult.Failed(error, Exception)
-    assert BoundResult.Success(2342, Exception).map(
-        lambda _: BoundResult.Failed(error, ValueError)
-    ) == BoundResult.Failed(error, Exception)
 
 
     with pytest.raises(SystemExit) as exc:
@@ -142,8 +119,8 @@ def test_bound_result_wrap(second_param):
         return returns
 
     if second_param:
-        exception_bound_func = BoundResult.wrap(func, Exception)
-        valueerror_bound_func = BoundResult.wrap(func, ValueError)
+        exception_bound_func = BoundResult.wrap(Exception, func)
+        valueerror_bound_func = BoundResult.wrap(ValueError, func)
     else:
         exception_bound_func = BoundResult.wrap(Exception)(func)
         valueerror_bound_func = BoundResult.wrap(ValueError)(func)
@@ -184,8 +161,12 @@ def test_bound_result_wrap(second_param):
     assert valueerror_bound_func(ValueError(123), 1234).bound is ValueError
     assert valueerror_bound_func(ValueError(123), 1234).rebound(Exception).bound is Exception
 
-    assert Success("hello", ValueError).map(lambda x: exception_bound_func(None, x)) == Success("hello", ValueError)
+    assert Success("hello", ValueError).map(lambda x: exception_bound_func(None, x)).unwrap() == Success("hello", Exception)
     error = ValueError("hello")
     assert BoundResult.Failed(error, ValueError).map(lambda x: exception_bound_func(None, x)) == BoundResult.Failed(
         error, ValueError
     )
+
+if __name__ == "__main__":
+    test_bound_result_wrap(False)
+    test_bound_result_wrap(True)
