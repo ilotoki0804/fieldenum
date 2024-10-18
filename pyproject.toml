@@ -51,6 +51,7 @@ exclude_also = [
     "if (typing\\.)?TYPE_CHECKING:",
     "@(typing\\.)?deprecated",
     "@overload",
+    'if __name__ == "__main__":'
 ]
 
 [build-system]
