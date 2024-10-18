@@ -234,6 +234,15 @@ class _VariantAdepter(typing.Generic[T], MutableSet[type[T]], MutableMapping[typ
         flag_type = _get_type_if_unit(flag_type)
         return self._flags.pop(flag_type) if default is _MISSING else self._flags.pop(flag_type, default)
 
+    @typing.overload
+    def get(self, flag_type: type[T]) -> T | None: ...
+
+    @typing.overload
+    def get(self, flag_type: type[T], default: T) -> T: ...
+
+    @typing.overload
+    def get(self, flag_type: type[T], default: U) -> T | U: ...
+
     def get(self, flag_type, default=_MISSING):
         flag_type = _get_type_if_unit(flag_type)
         return self._flags.get(flag_type) if default is _MISSING else self._flags.get(flag_type, default)
