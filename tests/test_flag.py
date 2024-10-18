@@ -1,10 +1,11 @@
 from email.errors import MessageError
+from typing import TYPE_CHECKING
 import pytest
 from fieldenum import Flag
 from fieldenum.enums import Message
 
 def test_flag():
-    flag = Flag()
+    flag = Flag[Message]()
     flag.add(Message.Move(1, 2))
     flag.add(Message.Quit)
     flag.add(Message.ChangeColor(1, 2, 3))
@@ -50,12 +51,12 @@ def test_flag():
 
 
 def test_mixins():
-    flag = Flag()
+    flag = Flag[Message]()
     flag.add(Message.Move(1, 2))
     flag.add(Message.Quit)
     flag.add(Message.ChangeColor(1, 2, 3))
 
-    flag2 = Flag()
+    flag2 = Flag[Message]()
     flag2.add(Message.Move(1, 2))
     flag2.add(Message.Quit)
     flag2.add(Message.ChangeColor(1, 2, 3))
@@ -81,7 +82,7 @@ def test_mixins():
 
 
 def test_adapter():
-    flag = Flag()
+    flag = Flag[Message]()
     flag.add(Message.Move(1, 2))
     flag.add(Message.Quit)
     flag.add(Message.ChangeColor(1, 2, 3))
@@ -111,17 +112,18 @@ def test_adapter():
     with pytest.raises(TypeError):
         () | adapter  # type: ignore
     with pytest.raises(TypeError):
-        adapter |= ()  # type: ignore
-    with pytest.raises(TypeError):
         adapter ^ ()  # type: ignore
     with pytest.raises(TypeError):
         () ^ adapter  # type: ignore
     with pytest.raises(TypeError):
-        adapter ^= ()  # type: ignore
-    with pytest.raises(TypeError):
         adapter == ()  # type: ignore
-    with pytest.raises(TypeError):
-        adapter &= 2  # type: ignore
+    if not TYPE_CHECKING:
+        with pytest.raises(TypeError):
+            adapter |= ()  # type: ignore
+        with pytest.raises(TypeError):
+            adapter ^= ()  # type: ignore
+        with pytest.raises(TypeError):
+            adapter &= 2  # type: ignore
 
     assert adapter & {Message.Move, Message.Quit, Message.Pause} == Flag([
         Message.Move(1, 2),
@@ -203,7 +205,7 @@ def test_adapter():
 
     flag |= (Message.Quit, Message.Move(1, 2))  # type: ignore
 
-    assert adapter.get(Message.Quit) == Message.Quit
+    assert adapter.get(Message.Quit) == Message.Quit  # type: ignore
     assert adapter.get(Message.Move, 123) == Message.Move(1, 2)
     assert adapter.get(Message.Pause, 123) == 123
     assert adapter.get(Message.ChangeColor) is None
