@@ -139,7 +139,7 @@ def test_bound_result_wrap(second_param):
     assert not exception_bound_func(ValueError(), "hello")
 
     assert exception_bound_func(None, "hello").as_option() == Option.Some("hello")
-    assert exception_bound_func(Exception()).as_option() == Option.Nothing
+    assert exception_bound_func(Exception()).as_option() is Option.Nothing
 
     assert exception_bound_func(None, "hello").rebound(ValueError).map(lambda s: s + ", world!") == BoundResult.Success(
         "hello, world!", ValueError

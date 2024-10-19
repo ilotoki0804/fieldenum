@@ -247,7 +247,7 @@ class BoundResult[R, E: BaseException]:
     ) -> Callable[Params, BoundResult[Return, Bound]]: ...
 
     @classmethod
-    def wrap(cls, bound, func=None):
+    def wrap(cls, bound, func=None) -> Any:
         if func is None:
             return lambda func: cls.wrap(bound, func)
 
