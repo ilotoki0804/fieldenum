@@ -87,6 +87,9 @@ class Option[T]:
             case other:
                 unreachable(other)
 
+    # experimental
+    __invert__ = unwrap
+
     def expect(self, message_or_exception: str | BaseException, /) -> T:
         match self, message_or_exception:
             case Option.Nothing, BaseException() as exception:
@@ -305,6 +308,9 @@ class BoundResult[R, E: BaseException]:
 
             case other:
                 unreachable(other)
+
+    # experimental
+    __invert__ = unwrap
 
     def as_option(self) -> Option[R]:
         match self:
