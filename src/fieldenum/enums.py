@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import functools
 import sys
-from typing import TYPE_CHECKING, Any, Callable, Mapping, NoReturn, Self, Sequence, final, overload, SupportsIndex
+from typing import TYPE_CHECKING, Any, Callable, Mapping, NoReturn, Self, Sequence, final, overload, SupportsIndex, Protocol
 
 from . import Unit, Variant, fieldenum, unreachable
 from .exceptions import IncompatibleBoundError, UnwrapFailedError
@@ -18,6 +18,10 @@ __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 _MISSING = object()
 type _ExceptionTypes = type[BaseException] | tuple[type[BaseException], ... ]
 type _Types = type | tuple[type, ... ]
+
+
+class _SupportsGetitem[Item, Value](Protocol):
+    def __getitem__(self, item: Item, /) -> Value: ...
 
 
 @final  # A redundant decorator for type checkers.
@@ -119,6 +123,16 @@ class Option[T]:
         ignored: _Types = ...,
     ) -> Option[Value | Default]: ...
 
+    @overload
+    def get[Item, Value, Default](
+        self: Option[_SupportsGetitem[Item, Value]],
+        key: Item,
+        *,
+        default: Default,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Value | Default]: ...
+
     # no default
 
     @overload
@@ -138,6 +152,15 @@ class Option[T]:
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Return]: ...
+
+    @overload
+    def get[Item, Value](
+        self: Option[_SupportsGetitem[Item, Value]],
+        key: Item,
+        *,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Value]: ...
 
     # fallback
 
