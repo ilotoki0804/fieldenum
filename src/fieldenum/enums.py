@@ -100,44 +100,44 @@ class Option[T]:
     # with defaults
 
     @overload
-    def get[Key, Result, Default](
-        self: Option[Mapping[Key, Result]],
+    def get[Key, Value, Default](
+        self: Option[Mapping[Key, Value]],
         key: Key,
         *,
         default: Default,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
-    ) -> Option[Result | Default]: ...
+    ) -> Option[Value | Default]: ...
 
     @overload
-    def get[Result, Default](
-        self: Option[Sequence[Result]],
+    def get[Value, Default](
+        self: Option[Sequence[Value]],
         key: SupportsIndex,
         *,
         default: Default,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
-    ) -> Option[Result | Default]: ...
+    ) -> Option[Value | Default]: ...
 
     # no default
 
     @overload
-    def get[Key, Result](
-        self: Option[Mapping[Key, Result]],
+    def get[Key, Value](
+        self: Option[Mapping[Key, Value]],
         key: Key,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
-    ) -> Option[Result]: ...
+    ) -> Option[Value]: ...
 
     @overload
-    def get[Result](
-        self: Option[Sequence[Result]],
+    def get[Return](
+        self: Option[Sequence[Return]],
         key: SupportsIndex,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
-    ) -> Option[Result]: ...
+    ) -> Option[Return]: ...
 
     # fallback
 
