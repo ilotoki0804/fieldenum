@@ -66,8 +66,7 @@ def test_option_get():
     with pytest.raises(TypeError):
         assert other_opt.get(123, exc=(KeyError, IndexError)) is Option.Nothing
     with pytest.raises(TypeError):
-        # This code raises type checker error, whereas the others not. I don't understand why.
-        assert other_opt.get(123, exc=KeyError | IndexError) is Option.Nothing  # type: ignore
+        assert other_opt.get(123, exc=KeyError | IndexError) is Option.Nothing
 
     # compound gets
     complex_dict_opt = Option.new({f"no{i}": i for i in range(100)} | {"hello": {"world": {"spam": "ham"}}})

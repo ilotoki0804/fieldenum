@@ -16,8 +16,8 @@ from .exceptions import IncompatibleBoundError, UnwrapFailedError
 __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 
 _MISSING = object()
-type _ExceptionTypes = type[BaseException] | tuple[type[BaseException], ... ]
-type _Types = type | tuple[type, ... ]
+type _ExceptionTypes = type[BaseException] | tuple[type[BaseException], ... ] | UnionType
+type _Types = type | tuple[type, ... ] | UnionType
 
 
 class _SupportsGetitem[Item, Value](Protocol):
