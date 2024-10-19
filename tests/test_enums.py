@@ -1,8 +1,87 @@
+from typing import Any, assert_type
 import pytest
 from fieldenum import *
 from fieldenum.enums import *
 from fieldenum.exceptions import IncompatibleBoundError, UnwrapFailedError
 
+
+def test_option_get():
+    list_opt = Option.new(list(range(100)))
+    dict_opt = Option.new({f"no{i}": i for i in range(100)})
+    other_opt = Option.new(234)
+
+    # Basic get
+    assert list_opt.get(3) == Option.Some(3)
+    assert list_opt.get(300) is Option.Nothing
+    assert dict_opt.get("no4") == Option.Some(4)
+    assert dict_opt.get("not_key") is Option.Nothing
+    assert other_opt.get(123) is Option.Nothing
+    assert_type(list_opt.get(3), Option[int])
+    assert_type(list_opt.get(300), Option[int])
+    assert_type(dict_opt.get("no4"), Option[int])
+    assert_type(dict_opt.get("not_key"), Option[int])
+    assert_type(other_opt.get(123), Option)
+
+    # get with a default
+    assert list_opt.get(3, default=23) == Option.Some(3)
+    assert list_opt.get(3, default="hello") == Option.Some(3)
+    assert list_opt.get(300, default=3) == Option.Some(3)
+    assert list_opt.get(300, default="hello") == Option.Some("hello")
+    assert dict_opt.get("no4", default=35) == Option.Some(4)
+    assert dict_opt.get("no4", default="hello") == Option.Some(4)
+    assert dict_opt.get("not_key") is Option.Nothing
+    assert dict_opt.get("not_key", default=123) == Option.Some(123)
+    assert dict_opt.get("not_key", default="e3") == Option.Some("e3")
+    assert other_opt.get(123, default="hello") == Option.Some("hello")
+    assert_type(list_opt.get(3, default=23), Option[int])
+    assert_type(list_opt.get(3, default="hello"), Option[int | str])
+    assert_type(list_opt.get(300, default=3), Option[int])
+    assert_type(list_opt.get(300, default="hello"), Option[int | str])
+    assert_type(dict_opt.get("no4", default=35), Option[int])
+    assert_type(dict_opt.get("no4", default="hello"), Option[int | str])
+    assert_type(dict_opt.get("not_key"), Option[int])
+    assert_type(dict_opt.get("not_key", default=123), Option[int])
+    assert_type(dict_opt.get("not_key", default="e3"), Option[int | str])
+    assert_type(other_opt.get(123, default="hello"), Option[Any | str])
+
+    # get with nothing
+    assert Option.Nothing.get("hello") is Option.Nothing
+    # with random methods
+    assert Option.Nothing.get("hello", exc=(), default="others") is Option.Nothing
+
+    # get with exc
+    assert list_opt.get(3, exc=()) == Option.Some(3)
+    assert list_opt.get(300, exc=IndexError) is Option.Nothing
+    assert list_opt.get(300, exc=IndexError | KeyError | TypeError) is Option.Nothing
+    assert list_opt.get(300, exc=(IndexError, TypeError)) is Option.Nothing
+    assert dict_opt.get("no4", exc=()) == Option.Some(4)
+    assert dict_opt.get("not_key", exc=KeyError) is Option.Nothing
+    assert other_opt.get(123, exc=TypeError) is Option.Nothing
+    with pytest.raises(IndexError):
+        assert list_opt.get(300, exc=()) is Option.Nothing
+    with pytest.raises(IndexError):
+        assert list_opt.get(300, exc=KeyError | TypeError) is Option.Nothing
+    with pytest.raises(KeyError):
+        assert dict_opt.get("not_key", exc=TypeError | IndexError) is Option.Nothing
+    with pytest.raises(TypeError):
+        assert other_opt.get(123, exc=(KeyError, IndexError)) is Option.Nothing
+    with pytest.raises(TypeError):
+        # This code raises type checker error, whereas the others not. I don't understand why.
+        assert other_opt.get(123, exc=KeyError | IndexError) is Option.Nothing  # type: ignore
+
+    # compound gets
+    complex_dict_opt = Option.new({f"no{i}": i for i in range(100)} | {"hello": {"world": {"spam": "ham"}}})
+    assert complex_dict_opt.get("hello").get("world") == Option.Some({"spam": "ham"})
+    assert complex_dict_opt.get("hello").get("world").get("spam") == Option.Some("ham")
+    assert complex_dict_opt.get("hello").get("world").get("spam").get("hello") is Option.Nothing
+
+    # ignored classes
+    str_opt = Option.new("hello, world!")
+    assert str_opt.get(7) is Option.Nothing
+    assert str_opt.get(7, ignored=()) == Option.Some("w")
+    assert str_opt.get(7, ignored=(dict, list)) == Option.Some("w")
+    assert list_opt.get(7, ignored=(dict, list)) is Option.Nothing
+    assert list_opt.get(7, ignored=dict | list) is Option.Nothing
 
 def test_option():
     assert Option[int].Some(123) == Option.Some(123)  # Can be changed in future.
@@ -53,7 +132,14 @@ def test_option():
         return returns
 
     assert func(1233) == Some(1233)
-    assert func(None) == Option.Nothing
+    assert func(None) is Option.Nothing
+
+    assert Option.Nothing.setdefault("hello") == Option.Some("hello")
+    assert Option.Some("world").setdefault("hello") == Option.Some("world")
+    assert_type(Option[str].Nothing.setdefault("hello"), Option[str])
+    assert_type(Option[int].Nothing.setdefault("hello"), Option[str | int])
+    assert_type(Option.new("world").setdefault("hello"), Option[str])
+    assert_type(Option.Some(123).setdefault("hello"), Option[str | int])
 
 
 def test_bound_result():

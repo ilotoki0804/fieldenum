@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import functools
 import sys
-from typing import TYPE_CHECKING, Callable, NoReturn, Self, final, overload
+from typing import TYPE_CHECKING, Any, Callable, Mapping, NoReturn, Self, Sequence, final, overload, SupportsIndex
 
 from . import Unit, Variant, fieldenum, unreachable
 from .exceptions import IncompatibleBoundError, UnwrapFailedError
@@ -16,6 +16,8 @@ from .exceptions import IncompatibleBoundError, UnwrapFailedError
 __all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
 
 _MISSING = object()
+type _ExceptionTypes = type[BaseException] | tuple[type[BaseException], ... ]
+type _Types = type | tuple[type, ... ]
 
 
 @final  # A redundant decorator for type checkers.
@@ -94,6 +96,98 @@ class Option[T]:
 
             case other:
                 unreachable(other)
+
+    # with defaults
+
+    @overload
+    def get[Key, Result, Default](
+        self: Option[Mapping[Key, Result]],
+        key: Key,
+        *,
+        default: Default,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Result | Default]: ...
+
+    @overload
+    def get[Result, Default](
+        self: Option[Sequence[Result]],
+        key: SupportsIndex,
+        *,
+        default: Default,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Result | Default]: ...
+
+    # no default
+
+    @overload
+    def get[Key, Result](
+        self: Option[Mapping[Key, Result]],
+        key: Key,
+        *,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Result]: ...
+
+    @overload
+    def get[Result](
+        self: Option[Sequence[Result]],
+        key: SupportsIndex,
+        *,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Result]: ...
+
+    # fallback
+
+    @overload
+    def get[Default](
+        self,
+        key,
+        *,
+        default: Default,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Any | Default]: ...
+
+    @overload
+    def get(
+        self,
+        key,
+        *,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option: ...
+
+    def get(self, key, *, default=_MISSING, exc=(TypeError, IndexError, KeyError), ignored=(str, bytes, bytearray)):
+        match self:
+            case Option.Nothing:
+                return self
+
+            case Option.Some(to_subscript):
+                if ignored and isinstance(to_subscript, ignored):
+                    return Option.Nothing.setdefault(default)
+                try:
+                    return Option.Some(to_subscript[key])
+                except BaseException as e:
+                    if not isinstance(e, exc):
+                        raise
+                    return Option.Nothing.setdefault(default)
+
+    @overload
+    def setdefault(self, value: T, /) -> Self: ...
+
+    @overload
+    def setdefault[U](self, value: U, /) -> Option[T | U]: ...
+
+    def setdefault[U](self, value: U, /) -> Option[T | U]:
+        if value is _MISSING:
+            return self
+        elif self is Option.Nothing:
+            return Option.Some(value)
+        else:
+            return self
 
     def map[U](self, func: Callable[[T], U], /) -> Option[U]:
         match self:
