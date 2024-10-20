@@ -1,4 +1,3 @@
-# type: ignore
 """Collection of useful fieldenums.
 
 WARNING: This submodule can only be imported on Python 3.12 or later.
@@ -8,7 +7,22 @@ from __future__ import annotations
 
 import functools
 import sys
-from typing import TYPE_CHECKING, Any, Callable, Mapping, NoReturn, Self, Sequence, final, overload, SupportsIndex, Protocol
+from types import UnionType
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generic,
+    Mapping,
+    NoReturn,
+    Protocol,
+    Self,
+    Sequence,
+    SupportsIndex,
+    TypeVar,
+    final,
+    overload,
+)
 
 from . import Unit, Variant, fieldenum, unreachable
 from .exceptions import IncompatibleBoundError, UnwrapFailedError
@@ -24,12 +38,14 @@ class _SupportsGetitem[Item, Value](Protocol):
     def __getitem__(self, item: Item, /) -> Value: ...
 
 
+T = TypeVar("T", covariant=True)  # variance inference did not work well and i don't know why
+
 @final  # A redundant decorator for type checkers.
 @fieldenum
-class Option[T]:
+class Option(Generic[T]):
     if TYPE_CHECKING:
         Nothing = Unit
-        class Some[T](Option[T]):
+        class Some[T](Option[T]):  # type: ignore
             __match_args__ = ("_0",)
             __fields__ = (0,)
 
@@ -68,9 +84,6 @@ class Option[T]:
     def unwrap(self) -> T: ...
 
     @overload
-    def unwrap(self, default: T) -> T: ...
-
-    @overload
     def unwrap[U](self, default: U) -> T | U: ...
 
     def unwrap(self, default=_MISSING):
@@ -104,7 +117,39 @@ class Option[T]:
             case other:
                 unreachable(other)
 
-    # with defaults
+    # where default type is equal to result type
+
+    @overload
+    def get[Key, Value](
+        self: Option[Mapping[Key, Value]],
+        key: Key,
+        *,
+        default: Value,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Value]: ...
+
+    @overload
+    def get[Value](
+        self: Option[Sequence[Value]],
+        key: SupportsIndex,
+        *,
+        default: Value,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Value]: ...
+
+    @overload
+    def get[Item, Value](
+        self: Option[_SupportsGetitem[Item, Value]],
+        key: Item,
+        *,
+        default: Value,
+        exc: _ExceptionTypes = ...,
+        ignored: _Types = ...,
+    ) -> Option[Value]: ...
+
+    # with default
 
     @overload
     def get[Key, Value, Default](
@@ -148,13 +193,13 @@ class Option[T]:
     ) -> Option[Value]: ...
 
     @overload
-    def get[Return](
-        self: Option[Sequence[Return]],
+    def get[Value](
+        self: Option[Sequence[Value]],
         key: SupportsIndex,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
-    ) -> Option[Return]: ...
+    ) -> Option[Value]: ...
 
     @overload
     def get[Item, Value](
@@ -195,17 +240,11 @@ class Option[T]:
                 if ignored and isinstance(to_subscript, ignored):
                     return Option.Nothing.setdefault(default)
                 try:
-                    return Option.Some(to_subscript[key])
+                    return Option.Some(to_subscript[key])  # type: ignore
                 except BaseException as e:
                     if not isinstance(e, exc):
                         raise
                     return Option.Nothing.setdefault(default)
-
-    @overload
-    def setdefault(self, value: T, /) -> Self: ...
-
-    @overload
-    def setdefault[U](self, value: U, /) -> Option[T | U]: ...
 
     def setdefault[U](self, value: U, /) -> Option[T | U]:
         if value is _MISSING:
@@ -238,7 +277,7 @@ class Option[T]:
 @fieldenum
 class BoundResult[R, E: BaseException]:
     if TYPE_CHECKING:
-        class Success[R, E: BaseException](BoundResult[R, E]):
+        class Success[R, E: BaseException](BoundResult[R, E]):  # type: ignore
             __match_args__ = ("value", "bound")
             __fields__ = ("value", "bound")
 
@@ -252,7 +291,7 @@ class BoundResult[R, E: BaseException]:
 
             def dump(self) -> tuple[R, E]: ...
 
-        class Failed[R, E: BaseException](BoundResult[R, E]):
+        class Failed[R, E: BaseException](BoundResult[R, E]):  # type: ignore
             __match_args__ = ("error", "bound")
             __fields__ = ("error", "bound")
 
@@ -393,7 +432,7 @@ class Message:
     if TYPE_CHECKING:
         Quit = Unit
 
-        class Move(Message):
+        class Move(Message):  # type: ignore
             __match_args__ = ("x", "y")
             __fields__ = ("x", "y")
 
@@ -407,7 +446,7 @@ class Message:
 
             def dump(self) -> dict[str, int]: ...
 
-        class Write(Message):
+        class Write(Message):  # type: ignore
             __match_args__ = ("_0",)
             __fields__ = (0,)
 
@@ -418,7 +457,7 @@ class Message:
 
             def dump(self) -> tuple[int]: ...
 
-        class ChangeColor(Message):
+        class ChangeColor(Message):  # type: ignore
             __match_args__ = ("_0", "_1", "_2")
             __fields__ = (0, 1, 2)
 
@@ -435,7 +474,7 @@ class Message:
 
             def dump(self) -> tuple[int, int, int]: ...
 
-        class Pause(Message):
+        class Pause(Message):  # type: ignore
             __match_args__ = ()
             __fields__ = ()
 
