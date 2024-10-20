@@ -265,13 +265,19 @@ class Option(Generic[T]):
         else:
             return self
 
-    def map[U](self, func: Callable[[T], U], /) -> Option[U]:
+    def map[U](self, func: Callable[[T], U], /, *, suppress: _ExceptionTypes = ()) -> Option[U]:
         match self:
             case Option.Nothing:
                 return Option.Nothing
 
             case Option.Some(value):
-                return Option.Some(func(value))
+                try:
+                    return Option.Some(func(value))
+                except BaseException as e:
+                    if isinstance(e, suppress):
+                        return Option.Nothing
+                    else:
+                        raise
 
             case other:
                 unreachable(other)

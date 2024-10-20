@@ -126,6 +126,24 @@ def test_option():
     assert Some(123).map(lambda _: Option.Nothing) == Option.Some(Option.Nothing)
     assert Some(123).map(lambda _: Option.Some(567)) == Option.Some(Option.Some(567))
 
+    # test map suppressing
+    opt = Some("not an integer").map(int, suppress=ValueError)
+    assert_type(opt, Option[int])
+    assert opt is Option.Nothing
+
+    opt = Some("not an integer").map(int, suppress=ValueError | TypeError)
+    assert_type(opt, Option[int])
+    assert opt is Option.Nothing
+
+    opt = Some("123").map(int, suppress=ValueError)
+    assert_type(opt, Option[int])
+    assert opt == Option.Some(123)
+
+    with pytest.raises(ValueError):
+        opt = Some("not an integer").map(int)
+    with pytest.raises(ValueError):
+        opt = Some("not an integer").map(int, suppress=())
+
     # test wrap
     @Option.wrap
     def func[T](returns: T) -> T:
