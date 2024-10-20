@@ -126,7 +126,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Value,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value]: ...
 
@@ -137,7 +137,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Value,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value]: ...
 
@@ -148,7 +148,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Value,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value]: ...
 
@@ -161,7 +161,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Default,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value | Default]: ...
 
@@ -172,7 +172,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Default,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value | Default]: ...
 
@@ -183,7 +183,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Default,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value | Default]: ...
 
@@ -195,7 +195,7 @@ class Option(Generic[T]):
         key: Key,
         /,
         *,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value]: ...
 
@@ -205,7 +205,7 @@ class Option(Generic[T]):
         key: SupportsIndex,
         /,
         *,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value]: ...
 
@@ -215,7 +215,7 @@ class Option(Generic[T]):
         key: Item,
         /,
         *,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Value]: ...
 
@@ -228,7 +228,7 @@ class Option(Generic[T]):
         /,
         *,
         default: Default,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option[Any | Default]: ...
 
@@ -238,11 +238,11 @@ class Option(Generic[T]):
         key,
         /,
         *,
-        exc: _ExceptionTypes = ...,
+        suppress: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option: ...
 
-    def get(self, key, /, *, default=_MISSING, exc=(TypeError, IndexError, KeyError), ignored=(str, bytes, bytearray)):
+    def get(self, key, /, *, default=_MISSING, suppress=(TypeError, IndexError, KeyError), ignored=(str, bytes, bytearray)):
         match self:
             case Option.Nothing:
                 return self
@@ -253,7 +253,7 @@ class Option(Generic[T]):
                 try:
                     return Option.Some(to_subscript[key])  # type: ignore
                 except BaseException as e:
-                    if not isinstance(e, exc):
+                    if not isinstance(e, suppress):
                         raise
                     return Option.Nothing.setdefault(default)
 

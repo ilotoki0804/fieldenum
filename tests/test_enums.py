@@ -47,26 +47,26 @@ def test_option_get():
     # get with nothing
     assert Option.Nothing.get("hello") is Option.Nothing
     # with random methods
-    assert Option.Nothing.get("hello", exc=(), default="others") is Option.Nothing
+    assert Option.Nothing.get("hello", suppress=(), default="others") is Option.Nothing
 
     # get with exc
-    assert list_opt.get(3, exc=()) == Option.Some(3)
-    assert list_opt.get(300, exc=IndexError) is Option.Nothing
-    assert list_opt.get(300, exc=IndexError | KeyError | TypeError) is Option.Nothing
-    assert list_opt.get(300, exc=(IndexError, TypeError)) is Option.Nothing
-    assert dict_opt.get("no4", exc=()) == Option.Some(4)
-    assert dict_opt.get("not_key", exc=KeyError) is Option.Nothing
-    assert other_opt.get(123, exc=TypeError) is Option.Nothing
+    assert list_opt.get(3, suppress=()) == Option.Some(3)
+    assert list_opt.get(300, suppress=IndexError) is Option.Nothing
+    assert list_opt.get(300, suppress=IndexError | KeyError | TypeError) is Option.Nothing
+    assert list_opt.get(300, suppress=(IndexError, TypeError)) is Option.Nothing
+    assert dict_opt.get("no4", suppress=()) == Option.Some(4)
+    assert dict_opt.get("not_key", suppress=KeyError) is Option.Nothing
+    assert other_opt.get(123, suppress=TypeError) is Option.Nothing
     with pytest.raises(IndexError):
-        assert list_opt.get(300, exc=()) is Option.Nothing
+        assert list_opt.get(300, suppress=()) is Option.Nothing
     with pytest.raises(IndexError):
-        assert list_opt.get(300, exc=KeyError | TypeError) is Option.Nothing
+        assert list_opt.get(300, suppress=KeyError | TypeError) is Option.Nothing
     with pytest.raises(KeyError):
-        assert dict_opt.get("not_key", exc=TypeError | IndexError) is Option.Nothing
+        assert dict_opt.get("not_key", suppress=TypeError | IndexError) is Option.Nothing
     with pytest.raises(TypeError):
-        assert other_opt.get(123, exc=(KeyError, IndexError)) is Option.Nothing
+        assert other_opt.get(123, suppress=(KeyError, IndexError)) is Option.Nothing
     with pytest.raises(TypeError):
-        assert other_opt.get(123, exc=KeyError | IndexError) is Option.Nothing
+        assert other_opt.get(123, suppress=KeyError | IndexError) is Option.Nothing
 
     # compound gets
     complex_dict_opt = Option.new({f"no{i}": i for i in range(100)} | {"hello": {"world": {"spam": "ham"}}})
