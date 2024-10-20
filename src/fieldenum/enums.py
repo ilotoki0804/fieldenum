@@ -123,6 +123,7 @@ class Option(Generic[T]):
     def get[Key, Value](
         self: Option[Mapping[Key, Value]],
         key: Key,
+        /,
         *,
         default: Value,
         exc: _ExceptionTypes = ...,
@@ -133,6 +134,7 @@ class Option(Generic[T]):
     def get[Value](
         self: Option[Sequence[Value]],
         key: SupportsIndex,
+        /,
         *,
         default: Value,
         exc: _ExceptionTypes = ...,
@@ -143,6 +145,7 @@ class Option(Generic[T]):
     def get[Item, Value](
         self: Option[_SupportsGetitem[Item, Value]],
         key: Item,
+        /,
         *,
         default: Value,
         exc: _ExceptionTypes = ...,
@@ -155,6 +158,7 @@ class Option(Generic[T]):
     def get[Key, Value, Default](
         self: Option[Mapping[Key, Value]],
         key: Key,
+        /,
         *,
         default: Default,
         exc: _ExceptionTypes = ...,
@@ -165,6 +169,7 @@ class Option(Generic[T]):
     def get[Value, Default](
         self: Option[Sequence[Value]],
         key: SupportsIndex,
+        /,
         *,
         default: Default,
         exc: _ExceptionTypes = ...,
@@ -175,6 +180,7 @@ class Option(Generic[T]):
     def get[Item, Value, Default](
         self: Option[_SupportsGetitem[Item, Value]],
         key: Item,
+        /,
         *,
         default: Default,
         exc: _ExceptionTypes = ...,
@@ -187,6 +193,7 @@ class Option(Generic[T]):
     def get[Key, Value](
         self: Option[Mapping[Key, Value]],
         key: Key,
+        /,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
@@ -196,6 +203,7 @@ class Option(Generic[T]):
     def get[Value](
         self: Option[Sequence[Value]],
         key: SupportsIndex,
+        /,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
@@ -205,6 +213,7 @@ class Option(Generic[T]):
     def get[Item, Value](
         self: Option[_SupportsGetitem[Item, Value]],
         key: Item,
+        /,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
@@ -216,6 +225,7 @@ class Option(Generic[T]):
     def get[Default](
         self,
         key,
+        /,
         *,
         default: Default,
         exc: _ExceptionTypes = ...,
@@ -226,12 +236,13 @@ class Option(Generic[T]):
     def get(
         self,
         key,
+        /,
         *,
         exc: _ExceptionTypes = ...,
         ignored: _Types = ...,
     ) -> Option: ...
 
-    def get(self, key, *, default=_MISSING, exc=(TypeError, IndexError, KeyError), ignored=(str, bytes, bytearray)):
+    def get(self, key, /, *, default=_MISSING, exc=(TypeError, IndexError, KeyError), ignored=(str, bytes, bytearray)):
         match self:
             case Option.Nothing:
                 return self
