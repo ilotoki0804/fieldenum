@@ -272,6 +272,101 @@ def test_bound_result_wrap(second_param):
         error, ValueError
     )
 
+
+def test_result():
+    from fieldenum.enums import Result
+
+    # general features
+    assert Result.Ok(2342) == Result.Ok(2342)
+    assert Result.Ok(1234).unwrap() == 1234
+    assert ~Result.Ok(1234) == 1234
+    assert Result.Ok(1234).unwrap(34556) == 1234
+    with pytest.raises(ValueError, match="error"):
+        Result.Err(ValueError("error")).unwrap()
+    assert Result.Err(Exception("err")).unwrap(34556) == 34556
+    assert Result.Ok(False)
+    assert not Result.Err(Exception("Some exception."))
+
+    error = ValueError(123)
+    def raising(error):
+        raise error
+    with pytest.raises(ValueError):
+        Result.Ok(2342).map(
+            lambda _: raising(error), ArithmeticError
+        )
+    error = ValueError(1234)
+
+
+    with pytest.raises(SystemExit) as exc:
+        Result.Ok("success").exit()
+    assert exc.value.code == 0
+
+    with pytest.raises(SystemExit) as exc:
+        Result.Err(error).exit()
+    assert exc.value.code == 1
+
+    with pytest.raises(SystemExit) as exc:
+        Result.Err(error).exit("failed miserably...")
+    assert exc.value.code == "failed miserably..."
+
+    with pytest.raises(SystemExit) as exc:
+        Result.Err(error).exit(None)
+    assert exc.value.code == None
+
+
+@pytest.mark.parametrize(
+    "second_param",
+    [True, False],
+)
+def test_result_wrap(second_param):
+    from fieldenum.enums import Result
+
+    def func[T](raises: BaseException | None = None, returns: T = None) -> T:
+        if raises:
+            raise raises
+        return returns
+
+    if second_param:
+        exception_bound_func = Result.wrap(Exception, func)
+        valueerror_bound_func = Result.wrap(ValueError, func)
+    else:
+        exception_bound_func = Result.wrap(Exception)(func)
+        valueerror_bound_func = Result.wrap(ValueError)(func)
+
+    assert exception_bound_func(None, "hello") == Result.Ok("hello")
+    match exception_bound_func(ValueError(), "hello"):
+        case Result.Err(err):
+            assert isinstance(err, ValueError)
+        case other:
+            assert False, other
+    with pytest.raises(Exception, match="message"):
+        valueerror_bound_func(Exception("message"))
+    with pytest.raises(BaseException, match="message"):
+        exception_bound_func(BaseException("message"))
+    assert exception_bound_func(None, "hello")
+    assert not exception_bound_func(ValueError(), "hello")
+
+    assert exception_bound_func(None, "hello").as_option() == Option.Some("hello")
+    assert exception_bound_func(Exception()).as_option() is Option.Nothing
+
+    assert exception_bound_func(None, "hello").map(lambda s: s + ", world!", ValueError) == Result.Ok("hello, world!")
+    match exception_bound_func(None, "hello").map(lambda s: 1 / 0, Exception):
+        case Result.Err(err):
+            assert isinstance(err, ZeroDivisionError)
+        case other:
+            assert False, other
+    with pytest.raises(ZeroDivisionError):
+        exception_bound_func(None, "hello").map(lambda s: 1 / 0, ValueError)
+
+    with pytest.raises(TypeError):
+        Result.wrap(lambda: None, Exception, "unexpected_param")  # type: ignore
+    with pytest.raises(TypeError):
+        Result.wrap(lambda: None, Exception, "unexpected_param", "unexpected_param2")  # type: ignore
+
+    assert Result.Ok("hello").map(lambda x: exception_bound_func(None, x), ValueError).unwrap() == Result.Ok("hello")
+    error = ValueError("hello")
+    assert Result.Err(error).map(lambda x: exception_bound_func(None, x), ValueError) == Result.Err(error)
+
 if __name__ == "__main__":
     test_bound_result_wrap(False)
     test_bound_result_wrap(True)

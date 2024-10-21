@@ -292,6 +292,128 @@ class Option(Generic[T]):
 
 @final  # A redundant decorator for type checkers.
 @fieldenum
+class Result[R, E: BaseException]:
+    if TYPE_CHECKING:
+        class Ok[R, E: BaseException](Result[R, E]):  # type: ignore
+            __match_args__ = ("value",)
+            __fields__ = ("value",)
+
+            @property
+            def value(self) -> R: ...
+
+            def __init__(self, value: R): ...
+
+            def dump(self) -> tuple[R]: ...
+
+        class Err[R, E: BaseException](Result[R, E]):  # type: ignore
+            __match_args__ = ("error",)
+            __fields__ = ("error",)
+
+            @property
+            def error(self) -> E: ...
+
+            def __init__(self, error: BaseException): ...
+
+            def dump(self) -> tuple[E]: ...
+
+    else:
+        Ok = Variant(value=R)
+        Err = Variant(error=E)
+
+    def __bool__(self) -> bool:
+        return isinstance(self, Result.Ok)
+
+    @overload
+    def unwrap(self) -> R: ...
+
+    @overload
+    def unwrap(self, default: R) -> R: ...
+
+    @overload
+    def unwrap[T](self, default: T) -> R | T: ...
+
+    def unwrap(self, default=_MISSING):
+        match self:
+            case Result.Ok(value):
+                return value
+
+            case Result.Err(error) if default is _MISSING:
+                raise error
+
+            case Result.Err(error):
+                return default
+
+            case other:
+                unreachable(other)
+
+    # experimental
+    __invert__ = unwrap
+
+    def as_option(self) -> Option[R]:
+        match self:
+            case Result.Ok(value):
+                return Option.Some(value)
+
+            case Result.Err(_):
+                return Option.Nothing
+
+            case other:
+                unreachable(other)
+
+    def exit(self, error_code: str | int | None = 1) -> NoReturn:
+        sys.exit(0 if self else error_code)
+
+    def map[NewReturn](self, func: Callable[[R], NewReturn], bound: _ExceptionTypes, /) -> Result[NewReturn, E]:
+        match self:
+            case Result.Ok(ok):
+                try:
+                    return Result.Ok(func(ok))
+                except BaseException as error:
+                    if isinstance(error, bound):
+                        return Result.Err(error)
+                    else:
+                        raise
+
+            case Result.Err(error) as failed:
+                if TYPE_CHECKING:
+                    return Result.Err[NewReturn, E](error)
+                else:
+                    return failed
+
+            case other:
+                unreachable(other)
+
+    @overload
+    @classmethod
+    def wrap[**Params, Return, Bound: BaseException](
+        cls, bound: type[Bound], /
+    ) -> Callable[[Callable[Params, Return]], Callable[Params, Result[Return, Bound]]]: ...
+
+    @overload
+    @classmethod
+    def wrap[**Params, Return, Bound: BaseException](
+        cls, bound: type[Bound], func: Callable[Params, Return], /
+    ) -> Callable[Params, Result[Return, Bound]]: ...
+
+    @classmethod
+    def wrap(cls, bound, func=None) -> Any:
+        if func is None:
+            return lambda func: cls.wrap(bound, func)
+
+        @functools.wraps(func)
+        def inner(*args, **kwargs):
+            try:
+                return Result.Ok(func(*args, **kwargs))
+            except BaseException as error:
+                if isinstance(error, bound):
+                    return Result.Err(error)
+                else:
+                    raise
+        return inner
+
+
+@final  # A redundant decorator for type checkers.
+@fieldenum
 class BoundResult[R, E: BaseException]:
     if TYPE_CHECKING:
         class Success[R, E: BaseException](BoundResult[R, E]):  # type: ignore
@@ -306,7 +428,7 @@ class BoundResult[R, E: BaseException]:
 
             def __init__(self, value: R, bound: type[E]): ...
 
-            def dump(self) -> tuple[R, E]: ...
+            def dump(self) -> tuple[R, type[E]]: ...
 
         class Failed[R, E: BaseException](BoundResult[R, E]):  # type: ignore
             __match_args__ = ("error", "bound")
