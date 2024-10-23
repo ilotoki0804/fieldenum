@@ -5,6 +5,7 @@ from typing import Any, Self
 
 import pytest
 from fieldenum import Unit, Variant, factory, fieldenum, unreachable, variant
+from fieldenum.exceptions import UnreachableError
 
 
 class ExceptionForTest(Exception):
@@ -59,6 +60,12 @@ class Message:
     def ParamlessFuncVariantWithBody(self):
         pass
 
+
+def test_unreachable():
+    with pytest.raises(UnreachableError, match="Unexpected type 'str' of 'hello'"):
+        unreachable("hello")
+    with pytest.raises(UnreachableError, match="This code is meant to be unreachable, but somehow the code reached here. Address developers to fix the issue."):
+        unreachable()
 
 def test_class_variant():
     variant = Message.ClassVariant(123, Message.Quit)
