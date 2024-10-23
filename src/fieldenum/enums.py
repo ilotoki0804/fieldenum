@@ -282,6 +282,30 @@ class Option(Generic[T]):
             case other:
                 unreachable(other)
 
+    def spread_map[NewOption: Option](self, func: Callable[[T], NewOption], /, *, suppress: _ExceptionTypes = ()) -> NewOption:
+        match self:
+            case Option.Nothing:
+                return Option.Nothing  # type: ignore
+
+            case Option.Some(value):
+                try:
+                    result = func(value)
+                except BaseException as e:
+                    if isinstance(e, suppress):
+                        return Option.Nothing  # type: ignore
+                    else:
+                        raise
+
+                if isinstance(result, Option):
+                    return result
+                else:
+                    raise TypeError(
+                        f"Expect Option but received {type(result).__name__!r}"
+                    )
+
+            case other:
+                unreachable(other)
+
     @classmethod
     def wrap[**Params, Return](cls, func: Callable[Params, Return | None], /) -> Callable[Params, Option[Return]]:
         @functools.wraps(func)
