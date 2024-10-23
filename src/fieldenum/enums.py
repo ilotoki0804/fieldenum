@@ -127,7 +127,7 @@ class Option(Generic[T]):
         *,
         default: Value,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value]: ...
 
     @overload
@@ -138,7 +138,7 @@ class Option(Generic[T]):
         *,
         default: Value,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value]: ...
 
     @overload
@@ -149,7 +149,7 @@ class Option(Generic[T]):
         *,
         default: Value,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value]: ...
 
     # with default
@@ -162,7 +162,7 @@ class Option(Generic[T]):
         *,
         default: Default,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value | Default]: ...
 
     @overload
@@ -173,7 +173,7 @@ class Option(Generic[T]):
         *,
         default: Default,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value | Default]: ...
 
     @overload
@@ -184,7 +184,7 @@ class Option(Generic[T]):
         *,
         default: Default,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value | Default]: ...
 
     # no default
@@ -196,7 +196,7 @@ class Option(Generic[T]):
         /,
         *,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value]: ...
 
     @overload
@@ -206,7 +206,7 @@ class Option(Generic[T]):
         /,
         *,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value]: ...
 
     @overload
@@ -216,7 +216,7 @@ class Option(Generic[T]):
         /,
         *,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Value]: ...
 
     # fallback
@@ -229,7 +229,7 @@ class Option(Generic[T]):
         *,
         default: Default,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option[Any | Default]: ...
 
     @overload
@@ -239,16 +239,16 @@ class Option(Generic[T]):
         /,
         *,
         suppress: _ExceptionTypes = ...,
-        ignored: _Types = ...,
+        ignore: _Types = ...,
     ) -> Option: ...
 
-    def get(self, key, /, *, default=_MISSING, suppress=(TypeError, IndexError, KeyError), ignored=(str, bytes, bytearray)):
+    def get(self, key, /, *, default=_MISSING, suppress=(TypeError, IndexError, KeyError), ignore=(str, bytes, bytearray)):
         match self:
             case Option.Nothing:
                 return self
 
             case Option.Some(to_subscript):
-                if ignored and isinstance(to_subscript, ignored):
+                if ignore and isinstance(to_subscript, ignore):
                     return Option.Nothing.setdefault(default)
                 try:
                     return Option.Some(to_subscript[key])  # type: ignore

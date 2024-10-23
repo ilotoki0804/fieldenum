@@ -98,13 +98,13 @@ def test_option_get():
     assert complex_dict_opt.get("hello").get("world").get("spam") == Option.Some("ham")
     assert complex_dict_opt.get("hello").get("world").get("spam").get("hello") is Option.Nothing
 
-    # ignored classes
+    # ignore classes
     str_opt = Option.new("hello, world!")
     assert str_opt.get(7) is Option.Nothing
-    assert str_opt.get(7, ignored=()) == Option.Some("w")
-    assert str_opt.get(7, ignored=(dict, list)) == Option.Some("w")
-    assert list_opt.get(7, ignored=(dict, list)) is Option.Nothing
-    assert list_opt.get(7, ignored=dict | list) is Option.Nothing
+    assert str_opt.get(7, ignore=()) == Option.Some("w")
+    assert str_opt.get(7, ignore=(dict, list)) == Option.Some("w")
+    assert list_opt.get(7, ignore=(dict, list)) is Option.Nothing
+    assert list_opt.get(7, ignore=dict | list) is Option.Nothing
 
 def test_option():
     assert Option[int].Some(123) == Option.Some(123)  # Can be changed in future.
