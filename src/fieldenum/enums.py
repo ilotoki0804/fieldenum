@@ -282,7 +282,7 @@ class Option(Generic[T]):
             case other:
                 unreachable(other)
 
-    def spread_map[NewOption: Option](self, func: Callable[[T], NewOption], /, *, suppress: _ExceptionTypes = ()) -> NewOption:
+    def flatmap[NewOption: Option](self, func: Callable[[T], NewOption], /, *, suppress: _ExceptionTypes = ()) -> NewOption:
         match self:
             case Option.Nothing:
                 return Option.Nothing  # type: ignore

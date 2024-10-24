@@ -6,16 +6,16 @@ from fieldenum.exceptions import IncompatibleBoundError, UnwrapFailedError
 
 
 def test_option_spread_map():
-    opt = Option.new("123").map(int).spread_map(Option.new)
+    opt = Option.new("123").map(int).flatmap(Option.new)
     assert_type(opt, Option[int])
     assert opt == Option.Some(123)
 
-    opt = Option.new("가나다").map(int, suppress=ValueError).spread_map(Option.new)
+    opt = Option.new("가나다").map(int, suppress=ValueError).flatmap(Option.new)
     assert_type(opt, Option[int])
     assert opt == Option.Nothing
 
     list_opt = Option.Some([str(i) for i in range(20)])
-    opt = Option.new(3).spread_map(list_opt.get)
+    opt = Option.new(3).flatmap(list_opt.get)
     assert_type(opt, Option[str])
     assert opt == Option.Some("3")
 
@@ -23,11 +23,11 @@ def test_option_spread_map():
     def raising(opt):
         raise ValueError
     with pytest.raises(ValueError):
-        Option.new(3).spread_map(raising)
-    assert Option.new(3).spread_map(raising, suppress=ValueError) is Option.Nothing
+        Option.new(3).flatmap(raising)
+    assert Option.new(3).flatmap(raising, suppress=ValueError) is Option.Nothing
 
     with pytest.raises(TypeError):
-        Option.new(3).spread_map(str)  # type: ignore
+        Option.new(3).flatmap(str)  # type: ignore
     
 def test_option_get():
     list_opt = Option.new(list(range(100)))
