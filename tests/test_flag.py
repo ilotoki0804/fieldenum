@@ -93,11 +93,8 @@ def test_adapter():
     assert Message.ChangeColor in adapter
 
     assert len(adapter) == 3
-    assert set(adapter) == {
-        Message.Move,
-        Message.Quit,
-        Message.ChangeColor,
-    }
+    with pytest.raises(TypeError, match="[Cc]annot"):
+        iter(adapter)
     
     with pytest.raises(TypeError):
         adapter & 2  # type: ignore
@@ -196,11 +193,7 @@ def test_adapter():
     assert adapter[Message.Quit] == Message.Quit  # type: ignore
     assert adapter[Message.Move] == Message.Move(1, 2)
 
-    assert {adapter.popitem(), adapter.popitem()} == {
-        (Message.Quit, Message.Quit),
-        (Message.Move, Message.Move(1, 2))
-    }
-    with pytest.raises(KeyError):
+    with pytest.raises(TypeError, match="[Cc]annot"):
         adapter.popitem()
 
     flag |= (Message.Quit, Message.Move(1, 2))  # type: ignore
@@ -231,7 +224,5 @@ def test_adapter():
     assert not flag
 
     flag |= (Message.Quit, Message.Move(1, 2))  # type: ignore
-    assert set(adapter.items()) == {
-        (Message.Quit, Message.Quit),
-        (Message.Move, Message.Move(1, 2))
-    }
+    with pytest.raises(TypeError, match="[Cc]annot"):
+        adapter.items()
