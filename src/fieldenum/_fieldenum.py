@@ -244,7 +244,7 @@ class Variant:  # MARK: Variant
                     __hash__ = None  # type: ignore
                 else:
                     def __hash__(self):
-                        return hash(id(self))
+                        return hash(type(self))
 
                 @staticmethod
                 def _pickle(variant):
@@ -521,7 +521,7 @@ class UnitDescriptor:  # MARK: Unit
                 __hash__ = None  # type: ignore # Explicitly disable hash
             else:
                 def __hash__(self):
-                    return hash(id(self))
+                    return hash(type(self))
 
             def dump(self):
                 return None
