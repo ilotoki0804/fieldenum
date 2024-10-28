@@ -14,7 +14,7 @@ class Flag(typing.Generic[T], MutableSet[T]):
     def __init__(self, *flags: T) -> None:
         flags_dict: dict[type[T], T] = {type(flag): flag for flag in flags}
         self._flags = flags_dict
-        self._adapter = _VariantAdepter(flags_dict, __class__)
+        self.variants = _VariantAdepter(flags_dict, __class__)
 
     @classmethod
     def _from_iterable(cls, it) -> typing.Self:
@@ -53,22 +53,6 @@ class Flag(typing.Generic[T], MutableSet[T]):
 
     def clear(self) -> None:
         self._flags.clear()
-
-    @property
-    def variants(self) -> _VariantAdepter[T]:
-        """Access flags via type."""
-        return self._adapter
-
-    @variants.setter
-    def variants(self, value) -> None:
-        """Fake setter for variants.
-
-        This is used for inplace operations like: `flag.variants &= my_flag`
-
-        This does indeed not set value.
-        Use `self._adapter = value` if you *really* want to set value.
-        """
-        pass
 
 
 class _VariantAdepter(typing.Generic[T], MutableSet[type[T]], MutableMapping[type[T], T]):
