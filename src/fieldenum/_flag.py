@@ -22,7 +22,8 @@ class Flag(typing.Generic[T], MutableSet[T]):
         self._adapter = _VariantAdepter(flags_dict, __class__)
 
     def __contains__(self, other: T) -> bool:
-        return type(other) in self._flags and other == self._flags[type(other)]
+        flag = self._flags.get(type(other), _MISSING)
+        return flag is not _MISSING and (flag is other or flag == other)
 
     def __len__(self) -> int:
         return len(self._flags)
