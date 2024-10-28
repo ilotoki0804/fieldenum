@@ -27,7 +27,7 @@ from typing import (
 from . import Unit, Variant, fieldenum, unreachable
 from .exceptions import IncompatibleBoundError, UnwrapFailedError
 
-__all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed"]
+__all__ = ["Option", "BoundResult", "Message", "Some", "Success", "Failed", "Result", "Ok", "Err"]
 
 _MISSING = object()
 type _ExceptionTypes = type[BaseException] | tuple[type[BaseException], ... ] | UnionType
@@ -348,13 +348,13 @@ class Result[R, E: BaseException]:
         return isinstance(self, Result.Ok)
 
     @overload
-    def unwrap(self) -> R: ...
-
-    @overload
     def unwrap(self, default: R) -> R: ...
 
     @overload
     def unwrap[T](self, default: T) -> R | T: ...
+
+    @overload
+    def unwrap(self) -> R: ...
 
     def unwrap(self, default=_MISSING):
         match self:
@@ -387,7 +387,7 @@ class Result[R, E: BaseException]:
     def exit(self, error_code: str | int | None = 1) -> NoReturn:
         sys.exit(0 if self else error_code)
 
-    def map[NewReturn](self, func: Callable[[R], NewReturn], bound: _ExceptionTypes, /) -> Result[NewReturn, E]:
+    def map[NewReturn](self, func: Callable[[R], NewReturn], /, bound: _ExceptionTypes) -> Result[NewReturn, E]:
         match self:
             case Result.Ok(ok):
                 try:
@@ -398,11 +398,32 @@ class Result[R, E: BaseException]:
                     else:
                         raise
 
-            case Result.Err(error) as failed:
-                if TYPE_CHECKING:
-                    return Result.Err[NewReturn, E](error)
+            case Result.Err() as err:
+                return err  # type: ignore
+
+            case other:
+                unreachable(other)
+
+    def flatmap[NewResult: Result](self, func: Callable[[R], NewResult], /, bound: _ExceptionTypes) -> NewResult:
+        match self:
+            case Result.Ok(value):
+                try:
+                    result = func(value)
+                except BaseException as exc:
+                    if isinstance(exc, bound):
+                        return Result.Err(exc)  # type: ignore
+                    else:
+                        raise
+
+                if isinstance(result, Result):
+                    return result
                 else:
-                    return failed
+                    raise TypeError(
+                        f"Expect Result but received {type(result).__name__!r}"
+                    )
+
+            case Result.Err() as err:
+                return err  # type: ignore
 
             case other:
                 unreachable(other)
@@ -663,5 +684,7 @@ class Message:
 
 
 Some = Option.Some
+Ok = Result.Ok
+Err = Result.Err
 Success = BoundResult.Success
 Failed = BoundResult.Failed

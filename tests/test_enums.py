@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any, assert_type
 import pytest
 from fieldenum import *
@@ -5,7 +6,47 @@ from fieldenum.enums import *
 from fieldenum.exceptions import IncompatibleBoundError, UnwrapFailedError
 
 
-def test_option_spread_map():
+def test_result_maps():
+    result = Result.Ok("hello")
+    err = result.map(int, ValueError)
+    assert type(err.error) == ValueError  # type: ignore
+    upper = result.map(str.upper, Exception)
+    assert upper.unwrap() == "HELLO"
+    with pytest.raises(ValueError):
+        result.map(int, ArithmeticError)
+
+    def returns_result[T, R, E: BaseException](func: Callable[[T], R], bound: type[E]) -> Callable[[T], Result[R, E]]:
+        def inner(value: T):
+            try:
+                return Ok(func(value))
+            except bound as exc:
+                return Err(exc)
+        return inner
+
+    # flatmap with returning result
+    result = Result.Ok("hello")
+    err = result.flatmap(returns_result(int, ValueError), ValueError)
+    assert type(err.error) == ValueError  # type: ignore
+    upper = result.flatmap(returns_result(str.upper, ValueError), Exception)
+    assert upper.unwrap() == "HELLO"
+    err = Exception()
+    assert Result.Err(err).flatmap(returns_result(int, ValueError), ValueError).error is err  # type: ignore
+    with pytest.raises(ValueError):
+        result.flatmap(returns_result(int, ArithmeticError), ArithmeticError)  # type: ignore
+
+    # flatmap with raising
+    err = result.flatmap(returns_result(int, ArithmeticError), ValueError)
+    assert type(err.error) == ValueError  # type: ignore
+    upper = result.flatmap(returns_result(str.upper, ArithmeticError), Exception)
+    assert upper.unwrap() == "HELLO"
+    assert Result.Err(err).flatmap(returns_result(int, ArithmeticError), ValueError).error is err  # type: ignore
+    with pytest.raises(ValueError):
+        result.flatmap(returns_result(int, ArithmeticError), ArithmeticError)  # type: ignore
+    with pytest.raises(TypeError):
+        result.flatmap(str.upper, ArithmeticError)  # type: ignore
+
+
+def test_option_flatmap():
     opt = Option.new("123").map(int).flatmap(Option.new)
     assert_type(opt, Option[int])
     assert opt == Option.Some(123)
