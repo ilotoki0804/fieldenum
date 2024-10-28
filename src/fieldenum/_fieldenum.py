@@ -122,15 +122,15 @@ class Variant:  # MARK: Variant
                 __match_args__ = item._slots_names
 
                 if build_hash:
-                    __slots__ += ("_hash",)
+                    __slots__ += ("__hash",)
 
                     if frozen:
                         def __hash__(self) -> int:
                             with suppress(AttributeError):
-                                return self._hash
+                                return self.__hash
 
-                            self._hash = hash(self.dump())
-                            return self._hash
+                            self.__hash = hash(self.dump())
+                            return self.__hash
                     else:
                         __hash__ = None  # type: ignore
 
@@ -173,15 +173,15 @@ class Variant:  # MARK: Variant
                     __match_args__ = item._slots_names
 
                 if build_hash:
-                    __slots__ += ("_hash",)
+                    __slots__ += ("__hash",)
 
                     if frozen:
                         def __hash__(self) -> int:
                             with suppress(AttributeError):
-                                return self._hash
+                                return self.__hash
 
-                            self._hash = hash(tuple(self.dump().items()))
-                            return self._hash
+                            self.__hash = hash(tuple(self.dump().items()))
+                            return self.__hash
                     else:
                         __hash__ = None  # type: ignore
 
@@ -346,15 +346,15 @@ class _FunctionVariant(Variant):  # MARK: FunctionVariant
             __match_args__ = item._match_args
 
             if build_hash:
-                __slots__ += ("_hash",)
+                __slots__ += ("__hash",)
 
                 if frozen:
                     def __hash__(self) -> int:
                         with suppress(AttributeError):
-                            return self._hash
+                            return self.__hash
 
-                        self._hash = hash(tuple(self.dump().items()))
-                        return self._hash
+                        self.__hash = hash(tuple(self.dump().items()))
+                        return self.__hash
                 else:
                     __hash__ = None  # type: ignore
 
