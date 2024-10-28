@@ -11,15 +11,14 @@ _MISSING = object()
 
 
 class Flag(typing.Generic[T], MutableSet[T]):
-    def __init__(self, flags: typing.Iterable[T] | None = None) -> None:
-        if isinstance(flags, dict):
-            raise ValueError(
-                "Dictionary cannot be flags to avoid common confusion. "
-                "Use `flags_keys_dict.keys()` if you *really* want to use dictionary."
-            )
-        flags_dict: dict[type[T], T] = {type(flag): flag for flag in flags or ()}
+    def __init__(self, *flags: T) -> None:
+        flags_dict: dict[type[T], T] = {type(flag): flag for flag in flags}
         self._flags = flags_dict
         self._adapter = _VariantAdepter(flags_dict, __class__)
+
+    @classmethod
+    def _from_iterable(cls, it) -> typing.Self:
+        return cls(*it)
 
     def __contains__(self, other: T) -> bool:
         flag = self._flags.get(type(other), _MISSING)
@@ -32,7 +31,7 @@ class Flag(typing.Generic[T], MutableSet[T]):
         return iter(self._flags.values())
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({list(self._flags.values())!r})"
+        return f"{type(self).__name__}({", ".join(repr(value) for value in self._flags.values())})"
 
     def add(self, flag: T) -> None:
         self._flags[type(flag)] = flag
@@ -73,7 +72,7 @@ class Flag(typing.Generic[T], MutableSet[T]):
 
 
 class _VariantAdepter(typing.Generic[T], MutableSet[type[T]], MutableMapping[type[T], T]):
-    def __init__(self, flag: dict[type[T], T], variant_constructor: type[Flag]):
+    def __init__(self, flag: dict[type[T], T], variant_constructor: type[Flag], /):
         self._flags = flag
         self._constructor = variant_constructor
 
@@ -92,7 +91,7 @@ class _VariantAdepter(typing.Generic[T], MutableSet[type[T]], MutableMapping[typ
         for type in other:
             with suppress(KeyError):
                 items.append(self[type])
-        return self._constructor(items)
+        return self._constructor(*items)
 
     def __iand__(self, other) -> typing.Self:
         if not isinstance(other, Iterable):
@@ -107,10 +106,10 @@ class _VariantAdepter(typing.Generic[T], MutableSet[type[T]], MutableMapping[typ
         if not isinstance(other, Iterable):
             return NotImplemented
         other = {self._get_type_if_unit(item) for item in other}
-        return self._constructor(
+        return self._constructor(*(
             flag for type, flag in self._flags.items()
             if type not in other
-        )
+        ))
 
     def __isub__(self, it) -> typing.Self:
         if it is self:

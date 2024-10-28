@@ -23,7 +23,7 @@ def test_flag():
     assert Message.Move(4, 5) in flag
 
     assert len(flag) == 3
-    assert repr(flag) == "Flag([Message.Move(x=4, y=5), Message.Quit, Message.ChangeColor(1, 2, 3)])"
+    assert repr(flag) == "Flag(Message.Move(x=4, y=5), Message.Quit, Message.ChangeColor(1, 2, 3))"
 
     assert Message.Pause() not in flag
     flag.add(Message.Pause())
@@ -43,9 +43,6 @@ def test_flag():
     flag.remove(Message.Move(1, 2))
     assert len(flag) == 3
 
-    with pytest.raises(ValueError):
-        Flag({})
-
     flag.clear()
     assert not flag
 
@@ -62,23 +59,23 @@ def test_mixins():
     flag2.add(Message.ChangeColor(1, 2, 3))
 
     assert flag == flag2
-    assert flag.isdisjoint(Flag([Message.Write("hello")]))
+    assert flag.isdisjoint(Flag(Message.Write("hello")))
     assert not flag.isdisjoint(flag2)
-    assert flag > Flag([Message.Quit])
+    assert flag > Flag(Message.Quit)
 
     flag -= {Message.Move(1, 2)}
-    assert flag == Flag([Message.Quit, Message.ChangeColor(1, 2, 3)])
+    assert flag == Flag(Message.Quit, Message.ChangeColor(1, 2, 3))
 
-    new_flag = flag | Flag([
+    new_flag = flag | Flag(
         Message.Move(4, 5),
         Message.Write("hello")
-    ])
-    assert new_flag == Flag([
+    )
+    assert new_flag == Flag(
         Message.Move(4, 5),
         Message.Write("hello"),
         Message.Quit,
         Message.ChangeColor(1, 2, 3),
-    ])
+    )
 
 
 def test_adapter():
@@ -122,15 +119,15 @@ def test_adapter():
         with pytest.raises(TypeError):
             adapter &= 2  # type: ignore
 
-    assert adapter & {Message.Move, Message.Quit, Message.Pause} == Flag([
+    assert adapter & {Message.Move, Message.Quit, Message.Pause} == Flag(
         Message.Move(1, 2),
         Message.Quit,
-    ])
+    )
     adapter &= {Message.Move, Message.Quit, Message.Pause}
-    assert flag == Flag([
+    assert flag == Flag(
         Message.Move(1, 2),
         Message.Quit,
-    ])
+    )
     assert len(adapter) == 2
     flag.variants &= {Message.Move, Message.Pause}
     assert len(adapter) == 1
