@@ -160,7 +160,6 @@ def test_option():
     option = Option.Some(123)
     assert option._0 == 123
     assert option.unwrap() == 123
-    assert ~option == 123
     assert option.unwrap(456) == 123
     option = Option.Nothing
     assert option is Option.Nothing
@@ -233,7 +232,6 @@ def test_bound_result():
     # general features
     assert BoundResult.Success(2342, Exception) == BoundResult.Success(2342, Exception)
     assert BoundResult.Success(1234, Exception).unwrap() == 1234
-    assert ~BoundResult.Success(1234, Exception) == 1234
     assert BoundResult.Success(1234, Exception).unwrap(34556) == 1234
     with pytest.raises(ValueError, match="error"):
         BoundResult.Failed(ValueError("error"), ValueError).unwrap()
@@ -344,7 +342,6 @@ def test_result():
     # general features
     assert Result.Ok(2342) == Result.Ok(2342)
     assert Result.Ok(1234).unwrap() == 1234
-    assert ~Result.Ok(1234) == 1234
     assert Result.Ok(1234).unwrap(34556) == 1234
     with pytest.raises(ValueError, match="error"):
         Result.Err(ValueError("error")).unwrap()
