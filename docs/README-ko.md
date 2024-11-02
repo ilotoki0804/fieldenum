@@ -7,7 +7,7 @@
 [![Sponsoring](https://img.shields.io/badge/Sponsoring-Toss-blue?logo=GitHub%20Sponsors&logoColor=white)](https://toss.me/ilotoki)
 
 
-파이썬에서의 러스트 스타일의 필드형 enum(ADT)
+파이썬에서의 러스트 스타일의 필드형 enum (ADT)
 
 **[English Docs](/README.md)**
 
@@ -22,6 +22,9 @@
 
 fieldenum은 러스트와 거의 비슷하면서도 파이썬의 문법과 잘 어울리는 필드가 있는 enum을 사용할 수 있도록 합니다.
 또한 `fieldenum.enums` 모듈에서는 타입 힌트를 완전하게 제공하는 다양한 fieldenum들을 제공하며, 이를 통해 Railroad Oriented Programming이나 `Option`과 같은 여러 함수형 프로그래밍의 개념을 활용할 수 있습니다.
+
+fieldenum은 파이썬에서의 함수형 프로그래밍에 대한 실험이 *아닌* 실용성을 지니는 것을 목적으로 합니다.
+실제로 fieldenum의 여러 기능들은 dataclass와 같이 *실제로* 유용합니다.
 
 ## Installation
 
@@ -1310,5 +1313,6 @@ get_message(123)  # will raise TypeError (GOOD)
 
 ## Releases
 
+* 0.3.0: `as_is` 함수 제거, `map`이 해당 fieldenum과 동작하는 방식 변경, 클래스와 함수를 이용한 배리언트 선언 추가, uv 사용, `BoundResult.exit()` 추가, Flag 타입 추가, UnwrapFailedError를 unwrap 실패 시 오류로 사용, 문서 및 기타 기능 개선, `flatmap` 추가
 * 0.2.0: `as_is` 함수들을 따로 분리, 각종 버그 수정, UnwrapFailedError 및 NotAllowedError 제거, 타입 힌트 개선, `kw_only()` 메서드 추가, 이름 있는 배리언트에서 인자로 사용 허용, `with_default()` 메서드 `default()`로 이름 변경, `default_factory()` 메서드 추가, `runtime_check` 인자 제거, `__post_init__()` 메서드 호출 추가, `BoundResult`에 서브클래스 검증 추가, `@variant` 데코레이터 추가
 * 0.1.0: 첫 릴리즈
