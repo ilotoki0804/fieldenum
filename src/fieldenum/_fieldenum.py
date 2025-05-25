@@ -431,6 +431,9 @@ class _FunctionVariant(Variant):  # MARK: FunctionVariant
                     result = item._func(*bound.args, **bound.kwargs)
                     if result is not None:
                         raise TypeError("Initializer should return None.")
+
+                    post_init = getattr(self, "__post_init__", lambda: None)
+                    post_init()
         # fmt: on
 
         self._actual = ConstructedVariant
