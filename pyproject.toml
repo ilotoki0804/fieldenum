@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "Rust-like fielded Enums in Python"
 authors = [{ name = "ilotoki0804", email = "ilotoki0804@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 keywords = [
     "enum",
     "dataclass",
