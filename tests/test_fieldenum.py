@@ -60,6 +60,10 @@ class Message:
     def ParamlessFuncVariantWithBody(self):
         pass
 
+    @variant
+    def ParamlessFuncVariantWithoutBody(self):
+        pass
+
 
 def test_unreachable():
     with pytest.raises(UnreachableError, match="Unexpected type 'str' of 'hello'"):
@@ -210,6 +214,17 @@ def test_relationship():
     assert isinstance(Message.ChangeColor(123, 456, 789), Message)
     assert isinstance(Message.Pause(), Message.Pause)
     assert isinstance(Message.Pause(), Message)
+
+
+def test_fieldless_function():
+    # with pytest.raises(TypeError, match="unhashable type:"):
+    #     {Message.ParamlessFuncVariantWithBody()}
+
+    # with pytest.raises(TypeError, match="unhashable type:"):
+    #     {Message.ParamlessFuncVariantWithoutBody()}
+
+    assert Message.ParamlessFuncVariantWithBody() is Message.ParamlessFuncVariantWithBody()
+    assert Message.ParamlessFuncVariantWithoutBody() is Message.ParamlessFuncVariantWithoutBody()
 
 
 def test_instancing():

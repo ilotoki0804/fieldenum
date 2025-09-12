@@ -276,7 +276,7 @@ POSITIONALS = (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_O
 
 
 class _FunctionVariant(Variant):  # MARK: FunctionVariant
-    __slots__ = ("_func", "_signature", "_match_args", "_self_included")
+    __slots__ = ("_func", "_signature", "_match_args", "_self_included", "_paramless")
     name: str
 
     def __init__(self, func: types.FunctionType) -> None:
@@ -285,6 +285,7 @@ class _FunctionVariant(Variant):  # MARK: FunctionVariant
         self._func = func
         signature = inspect.signature(func)
         parameters_raw = signature.parameters
+        self._paramless = not parameters_raw or len(parameters_raw) == 1 and "self" in parameters_raw
         self._signature = signature
 
         parameters_iter = iter(parameters_raw)
@@ -326,8 +327,13 @@ class _FunctionVariant(Variant):  # MARK: FunctionVariant
         self._base = cls
         item = self
 
+        if self._paramless:
+            meta = dict(metaclass=ParamlessSingletonMeta)
+        else:
+            meta = {}
+
         # fmt: off
-        class ConstructedVariant(cls):
+        class ConstructedVariant(cls, **meta):
             if frozen and not typing.TYPE_CHECKING:
                 __slots__ = tuple(f"__original_{name}" for name in item._slots_names)
                 for name in item._slots_names:
